@@ -1,0 +1,19 @@
+Credits (Who did what)
+
+Music:
+	Title Music:	Tetris Music A (techno remix) by Damian Yerrick
+	Game Music:	CutMan theme (from Mega Man 1)
+
+Sound:	
+	All sounds and voices from X-Wing vs. Tie Fighter by Lucas Arts, except enemy blaster, which is 	from Windows.
+
+Art:	
+	Title Screen:	Chase Childress
+	All other art:	James Burton
+
+Coding:
+	DirectMidi, DirectSound, DirectDraw code:	Ian Parberry (written for Learn Video Game 								Programming with DirectX 8)
+	InputSystem class:	Dave Astle (written for OpenGL Game Programming)
+	All other code:		James Burton
+
+Special Thanks to Dr. Brian Malloy for coming up with the idea to have a video game programming class at Clemson.
