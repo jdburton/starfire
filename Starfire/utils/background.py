@@ -1,6 +1,6 @@
 import pygame
 
-BG_FILE='images/starfield800.bmp'
+
      
 class Background():
    
@@ -19,8 +19,7 @@ class Background():
 
    def scroll(self,speed):
       pass
-   def drawToScreen(self,screen):
-      pass
+
    
 
 class DownScrollingBackground(Background):

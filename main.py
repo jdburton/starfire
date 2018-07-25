@@ -2,8 +2,7 @@
 
 import pygame, sys
 from pygame.locals import *
-import view
-import controller
+import Starfire.controller as controller
  
 pygame.init()
 C = controller.Controller()

@@ -1,0 +1,46 @@
+Name: James Burton	
+
+Course: CpSc 8700
+
+Clemson Email Address: jburto2@clemson.edu
+
+Project Number 6
+
+Project due date: July 25th
+
+Project description: 
+
+This is Phase 1 of the project to port the game Starfire from Visual C++ 6.0 and DirectDraw to Pygame.
+
+The original milestone goals were:
+
+	1. To create and render animated sprites on screen. 
+
+	2. The user will be able to control and move their own ship. 
+
+	3. A fixed number of enemy ships will be created and moved on the screen by the AI.
+	
+All three of these goals have been accomplished: Sprites are being created and rendered to the screen,
+the user can move the ship with the mouse or keyboard, and four enemy ships are displayed on the screen
+and moving with a (primitive) AI. 
+
+Additionally, the following goals have been met:
+	
+	4. The game includes a scrolling background.
+	5. The game includes theme music.
+	6. The game can play sounds
+	
+The easiest part of this project:
+
+	1. Using Pygame. Pygame provides much of the functionality automatically that was hard and manual in Visual C++.
+	2. The sound and music API was especially easy to use.
+
+Problems that I had in completing this project:
+
+	1. Figuring out how to design a game in the Model-View-Controller design pattern. It's hard to get used to, but once I did, I was able to dramatically reduce the 
+	   amount of code in the project.
+	   
+	2. Figuring out how to move the sprites around without them either jittering or flying off the screen.
+	
+	3. Installing Python 3.6.6 with on a Mac with Pydev because Pygame doesn't work with Python 3.7 and downgrading breaks Homebrew dependencies.
+	

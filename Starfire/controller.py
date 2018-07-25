@@ -1,9 +1,9 @@
 import pygame, sys
 from pygame.locals import *
 import random
-import spritesheet
-import view
-import model
+import Starfire.utils.spritesheet as spritesheet
+import Starfire.view as view
+import Starfire.model as model
 
 SCREEN_WIDTH=800
 SCREEN_HEIGHT=600
@@ -49,13 +49,20 @@ class Controller():
       self.M.moveEnemies()
       self.M.animate()
    
+   def playIntro(self):
+      sound = pygame.mixer.Sound('sounds/begin2.wav')
+      sound.play()
+   
    def playTheme(self):
       pygame.mixer.music.load('music/boss.mid')
       pygame.mixer.music.play(-1)
 
    def mainLoop(self):
       self.M.initGame()
+      
       self.playTheme()
+      self.playIntro()
+      
       while True:
          
          self.V.drawBackground()

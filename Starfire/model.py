@@ -1,6 +1,6 @@
-import background
-import spritesheet
-import gameobjects
+import Starfire.utils.background as background
+import Starfire.utils.spritesheet as spritesheet
+import Starfire.gameobjects as gameobjects
 import pygame
 
 class Model():
