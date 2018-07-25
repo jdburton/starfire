@@ -42,18 +42,25 @@ class Controller():
             self.M.movePlayerTo(event.pos[0],event.pos[1])
 
    def drawObjects(self):
-      pass
+      self.M.all_objects.draw(self.V.screen)
+      
+   def moveObjects(self):
+      self.processInput()
+      self.M.moveEnemies()
+      self.M.animate()
    
+   def playTheme(self):
+      pygame.mixer.music.load('music/boss.mid')
+      pygame.mixer.music.play(-1)
 
    def mainLoop(self):
       self.M.initGame()
+      self.playTheme()
       while True:
          
          self.V.drawBackground()
-         self.processInput()
-         self.M.moveEnemies()
-         self.M.animate()
-         self.M.all_objects.draw(self.V.screen)
+         self.moveObjects()
+         self.drawObjects()
          self.V.updateDisplay()      
     
          self.clock.tick(300)
