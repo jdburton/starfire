@@ -258,7 +258,7 @@ class Boss(Enemy):
    g_pSprite[BOSS_OBJECT] = new CClippedSprite(4,182,169);
    '''
    
-   OBJECT_WIDTH = 182
+   OBJECT_WIDTH = 180
    OBJECT_HEIGHT = 169
    
    '''
