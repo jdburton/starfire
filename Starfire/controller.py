@@ -15,6 +15,8 @@ class Controller():
       self.clock = pygame.time.Clock()
       self.V = view.View(SCREEN_WIDTH,SCREEN_HEIGHT)
       self.M = model.Model(SCREEN_WIDTH,SCREEN_HEIGHT)
+      self.fire = False
+      self.last_fired = 0
       
    
    
@@ -35,19 +37,42 @@ class Controller():
                move_x -= 10
             elif (event.key == K_RIGHT):
                move_x += 10 
-            self.M.movePlayer(move_x,move_y)    
+            #self.M.movePlayer(move_x,move_y)    
          elif (event.type == MOUSEMOTION):
             #print("pos: %r, rel: %r, buttons: %r" % (event.pos,event.rel,event.buttons))
 
             self.M.movePlayerTo(event.pos[0],event.pos[1])
+         
+         elif (event.type == MOUSEBUTTONDOWN):
+            self.fire = True
+         elif (event.type == MOUSEBUTTONUP):
+            self.fire = False
+   
+      #print("now: %r lastfired %r" % (now,self.last_fired))
+      if self.fire:
+         self.fireWeapon();
+
+            
 
    def drawObjects(self):
-      self.M.all_objects.draw(self.V.screen)
+      self.M.player_objects.draw(self.V.screen)
+      self.M.enemy_objects.draw(self.V.screen)
+      self.M.explosion_objects.draw(self.V.screen)
+      self.M.shot_objects.draw(self.V.screen)
+      self.M.enemy_shot_objects.draw(self.V.screen)
       
    def moveObjects(self):
       self.processInput()
-      self.M.moveEnemies()
+      self.M.moveObjects()
       self.M.animate()
+      self.M.collisionDetection()
+   
+         
+         
+      
+   def fireWeapon(self):
+      self.M.fireWeapon()
+
    
    def playIntro(self):
       sound = pygame.mixer.Sound('sounds/begin2.wav')
@@ -68,7 +93,12 @@ class Controller():
          self.V.drawBackground()
          self.moveObjects()
          self.drawObjects()
-         self.V.updateDisplay()      
+         self.V.updateDisplay()
+         self.V.postProcessing()
+         if self.M.checkGameOver():
+            sound = pygame.mixer.Sound('sounds/gameover.wav')
+            sound.play()
+         
     
-         self.clock.tick(300)
+         self.clock.tick(60)
    

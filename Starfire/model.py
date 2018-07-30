@@ -28,6 +28,9 @@ class Model():
       self.enemy_shot_objects = pygame.sprite.Group()
       self.shot_objects = pygame.sprite.Group()
       self.powerup_objects = pygame.sprite.Group()
+      self.explosion_objects = pygame.sprite.Group()
+      
+      self.lives = 3
       
 
    
@@ -74,7 +77,8 @@ class Model():
       enemy = None
       
       for i in range(0,4):
-         type = enemy_types[i] 
+         type = enemy_types[i]
+         #type = "Gunship" 
       
          if type == "Gunship":
             enemy = gameobjects.Gunship()
@@ -94,6 +98,9 @@ class Model():
    def animate(self):
       for object in self.all_objects:
          object.animate()
+      for explosion in self.explosion_objects:
+         explosion.animate()
+ 
          
    def movePlayer(self,x,y):
       self.playerOne.move(x,y)     
@@ -101,7 +108,96 @@ class Model():
    def movePlayerTo(self,x,y): 
       self.playerOne.moveTo(x,y)
    
-   def moveEnemies(self):
+   def moveObjects(self):
       for sprite in self.enemy_objects:
          sprite.move()
+         self.fireEnemyWeapons(sprite)
+      for sprite in self.shot_objects:
+         sprite.move()
+      for sprite in self.enemy_shot_objects:
+         sprite.move()
+
+   def fireEnemyWeapons(self,enemy):
+      shots = enemy.fireWeapon()
+      for cannon in shots:
+         if cannon is not None:
+            if cannon.name == "EnemyBlaster":
+               blast = gameobjects.EnemyBlaster(cannon.x_vel,cannon.y_vel,self.screen_width,self.screen_height)
+               blast.setImages(self.sprite_images[cannon.name],cannon.x_pos,cannon.y_pos)
+               self.enemy_shot_objects.add(blast)    
+            elif cannon.name == "EnemyBullet":
+               blast = gameobjects.EnemyBullet(cannon.x_vel,cannon.y_vel,self.screen_width,self.screen_height)
+               blast.setImages(self.sprite_images[cannon.name],cannon.x_pos,cannon.y_pos)
+               self.enemy_shot_objects.add(blast)       
+ 
+   
+   def fireWeapon(self):
+      
+      # fire the weapon
+      shots = self.playerOne.fireWeapon()
+      
+      for cannon in shots:
+         if cannon is not None:
+            blast = gameobjects.PlayerBlaster(cannon.x_vel,cannon.y_vel,self.screen_width,self.screen_height)
+            blast.setImages(self.sprite_images["PlayerBlaster"],cannon.x_pos,cannon.y_pos)
+            self.shot_objects.add(blast)
+      
+   def collisionDetection(self):
+      
+      # enemy vs enemy = Bounce
+      collided_enemies = pygame.sprite.groupcollide(self.enemy_objects, self.enemy_objects, False, False)
+      for enemy in collided_enemies:
+         if len(collided_enemies[enemy]) > 1: 
+            enemy.vel_x = int(-enemy.vel_x/2)
+            enemy.vel_y = int(-enemy.vel_y/2)
+
+      # Player vs enemy = damage to both            
+      player_hits = pygame.sprite.groupcollide(self.enemy_objects, self.player_objects, False, False)
+      for enemy in player_hits:
+         enemy.hit(self.playerOne)
+         self.playerOne.hit(enemy)
+         self.checkDeath(enemy)
+      
+      
+         
+      
+      # Blaster vs enemy: Kill blaster, damage enemy
+      blaster_hits = pygame.sprite.groupcollide(self.shot_objects, self.enemy_objects, True, False )
+      for hit in blaster_hits.keys():
+         enemy = blaster_hits[hit][0]
+         enemy.hit(hit)
+         self.checkDeath(enemy)
+         
+      # enemy shot vs player: Kill blaster, damage enemy
+      blaster_hits = pygame.sprite.groupcollide(self.enemy_shot_objects, self.player_objects, True, False )
+      for hit in blaster_hits.keys():
+         player = blaster_hits[hit][0]
+         player.hit(hit)
+      
+      self.checkDeath(self.playerOne)
+   
+   def checkDeath(self,object):
+         # Is the object dead?
+         if object.hitPoints <= 0:
+            explosion = gameobjects.Explosion()
+            explosion.setImages(self.sprite_images['Explosion'],object.rect.x,object.rect.y)
+            self.explosion_objects.add(explosion)
+            object.kill()
+            return True
+         return False
+   
+   def checkGameOver(self):
+      
+      if len(self.player_objects.sprites()) == 0:
+         if self.lives > 0:
+
+            self.lives -= 1
+            print("lives remaining %d" % self.lives)
+            self.playerOne.reset(400,500);
+            self.player_objects.add(self.playerOne)
+            
+         else:
+
+            return True
+      return False
       
