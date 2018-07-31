@@ -8,5 +8,5 @@ pygame.init()
 C = controller.Controller()
 
 C.mainLoop() 
-
+sys.exit()
     

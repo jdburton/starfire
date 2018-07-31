@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import pygame
 import random
+import math
 
    
 SPRITESHEET='images/newsprites.bmp'
@@ -20,6 +21,7 @@ class Shot():
 # All GameObjects are Sprites with game specific data and functionality.
 
 
+
 class GameObject(pygame.sprite.Sprite):
    
    OBJECT_WIDTH = 0
@@ -34,15 +36,13 @@ class GameObject(pygame.sprite.Sprite):
       self.vel_y = 0
       self.hitPoints = 1
       self.damage = 0
-
+      
 
    def constrain(self,width, height):
       self.max_x = width - self.OBJECT_WIDTH
       self.max_y = height - self.OBJECT_HEIGHT
       #print("Max x: %d Max y: %d" % (self.max_x, self.max_y))
       
-   def init(self):
-      pass
 
    def setImages(self,images,x_pos,y_pos,d_images=[]):
       self.object_images = images
@@ -51,6 +51,7 @@ class GameObject(pygame.sprite.Sprite):
       self.rect.x = x_pos
       self.rect.y = y_pos
    
+   # I'm sure there is a better way to do this, but it works well enough.
    def animate(self):
       
       self.object_frame += 1 
@@ -73,19 +74,7 @@ class GameObject(pygame.sprite.Sprite):
    
    def validateMove(self):
       #print ("Validating (%d,%d)" % (self.rect.x,self.rect.y))
-      if self.rect.x > self.max_x:
-         self.rect.x = self.max_x
-         self.vel_x = 0
-      elif self.rect.x < 0:
-         self.rect.x = 0
-         self.vel_x = 0
-         
-      if self.rect.y > self.max_y:
-         self.rect.y = self.max_y
-         self.vel_y = 0
-      elif self.rect.y < 0:
-         self.rect.y = 0
-         self.vel_y = 0
+      pass
    
     
       
@@ -111,7 +100,7 @@ class Player(GameObject):
   
    
    
-   def __init__(self):
+   def __init__(self,s_width,s_height):
       
       super().__init__()
       self.damage = 10
@@ -119,6 +108,8 @@ class Player(GameObject):
       self.time_created = pygame.time.get_ticks()
       self.fire_rate = 500
       self.last_fired = 0
+      self.constrain(s_width,s_height)
+      
       
    def fireWeapon(self):
       
@@ -169,6 +160,23 @@ class Player(GameObject):
       
       sound = pygame.mixer.Sound('sounds/dying.wav')
       sound.play()
+      
+   # Keep the player on the screen.
+   def validateMove(self):
+      
+      if self.rect.x > self.max_x:
+         self.rect.x = self.max_x
+         self.vel_x = 0
+      elif self.rect.x < 0:
+         self.rect.x = 0
+         self.vel_x = 0
+         
+      if self.rect.y > self.max_y:
+         self.rect.y = self.max_y
+         self.vel_y = 0
+      elif self.rect.y < 0:
+         self.rect.y = 0
+         self.vel_y = 0
       
 
    
@@ -223,19 +231,20 @@ class Enemy(GameObject):
    
 
    
-   def __init__(self):
+   def __init__(self,s_width,s_height):
       
       super().__init__()
+      self.constrain(s_width,s_height)
       
    
    
 
    
    def move(self):
-      return
-      self.vel_x += random.randint(-1,1)
-      self.vel_y += random.randint(-1,1)
-      super().changeVelocity(self.vel_x,self.vel_y)
+      #return
+      #self.vel_x += random.randint(-1,1)
+      #self.vel_y += random.randint(-1,1)
+      #super().changeVelocity(self.vel_x,self.vel_y)
       super().move()
 
    
@@ -246,7 +255,49 @@ class Enemy(GameObject):
       
    def fireWeapon(self):
       return []
+    
+   def acquireTarget(self,starfire):
+      self.target_x = starfire.rect.x
+      self.target_y = starfire.rect.y  
       
+    
+   # Use trig to aim the shot.
+   def aim(self,x_dir,y_dir,s_vel):  
+      theta = math.atan2(y_dir,x_dir)
+      
+      if (theta == 0):
+         x_vel = s_vel
+         y_vel = 0
+      elif (theta == 1):
+         y_vel = s_vel
+         x_vel = 0
+      else:
+         x_vel = int((s_vel/math.sin(theta))+0.5)
+         y_vel = int((s_vel/math.cos(theta))+0.5)
+      
+      if (y_vel < 0):
+         x_vel = -x_vel
+         y_vel = -y_vel  
+      
+      return (x_vel,y_vel)
+   
+   # Standard enemy move validation: Keep the enemy on the screen.
+   
+   def validateMove(self):
+      
+      if self.rect.x > self.max_x:
+         self.rect.x = self.max_x
+         self.vel_x = 0
+      elif self.rect.x < 0:
+         self.rect.x = 0
+         self.vel_x = 0
+         
+      if self.rect.y > self.max_y:
+         self.rect.y = self.max_y
+         self.vel_y = 0
+      elif self.rect.y < 0:
+         self.rect.y = 0
+         self.vel_y = 0
    
 # Enemy Gunship
 
@@ -276,16 +327,29 @@ class Gunship(Enemy):
                      (226,75, OBJECT_WIDTH, OBJECT_HEIGHT) ]
   
 
-   def __init__(self):
+   def __init__(self,s_width,s_height):
       
-      super().__init__()
+      super().__init__(s_width,s_height)
       self.hitPoints = 7
       self.damage = 5
       self.fire_rate = 1500
       self.last_fired = 0
+      self.target_x = 400
+      self.target_y = 500
+      
+   
+   
       
    def fireWeapon(self):
-       
+      
+      
+      x_dir  = self.target_x-self.rect.x+self.CENTER_CANNON[0]
+      y_dir = self.target_y-self.rect.y+self.CENTER_CANNON[1]
+
+      (x_vel,y_vel) = self.aim(x_dir,y_dir,3)
+      
+      #print("Aiming from (%d,%d) to (%d, %d) at (%d,%d)" % (self.rect.x+self.CENTER_CANNON[0],self.target_y-self.rect.y+self.CENTER_CANNON[1],self.target_x,self.target_y,x_vel,y_vel) )
+   
       now = pygame.time.get_ticks()
       
       shots = []
@@ -293,13 +357,21 @@ class Gunship(Enemy):
       if now - self.last_fired > self.fire_rate: 
    
          shots.append(Shot("EnemyBlaster",self.rect.x+self.LEFT_CANNON[0],self.rect.y+self.LEFT_CANNON[1],0,5))
-         shots.append(Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],random.randint(-3,3),random.randint(1,3)))
+         shots.append(Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],x_vel,y_vel))
          shots.append(Shot("EnemyBlaster",self.rect.x+self.RIGHT_CANNON[0],self.rect.y+self.RIGHT_CANNON[1],0,5))
 
          self.last_fired = now         
          # Play the sound
       
       return shots
+   
+   def move(self):
+      #return
+      self.vel_x += random.randint(-1,1)
+      self.vel_y += random.randint(-1,1)
+      super().changeVelocity(self.vel_x,self.vel_y)
+      super().move()
+   
 
 
       
@@ -331,13 +403,14 @@ class Dart(Enemy):
   
    
    
-   def __init__(self):
+   def __init__(self,s_width,s_height):
       
-      super().__init__()
+      super().__init__(s_width,s_height)
       self.hitPoints = 2
       self.damage = 4
       self.fire_rate = 2000
       self.last_fired = 0
+      self.max_y = s_height+self.OBJECT_HEIGHT
       
    def fireWeapon(self):
        
@@ -354,7 +427,23 @@ class Dart(Enemy):
          # Play the sound
       
       return shots
-
+   
+   def move(self):
+      
+      dir_x  = self.target_x-self.rect.x+self.CANNON[0]
+      dir_y = self.target_y-self.rect.y+self.CANNON[1]
+      
+      (self.vel_x,discard) = self.aim(dir_x,dir_y,8)
+      self.vel_y = 8
+      
+      print("Moving (%d,%d)" % (self.vel_y,self.vel_y))
+      
+      super().move()
+      
+   # Darts fly off the screen. Override Enemy.validateMove() here.
+   def validateMove(self):
+      if self.rect.y >= self.max_y:
+         self.kill()
  
 # Enemy Drone Fighter
 
@@ -383,9 +472,9 @@ class Drone(Enemy):
   
    
    
-   def __init__(self):
+   def __init__(self,s_width,s_height):
       
-      super().__init__()
+      super().__init__(s_width,s_height)
       self.hitPoints = 3
       self.damage = 3
       self.fire_rate = 3000
@@ -409,6 +498,16 @@ class Drone(Enemy):
          # Play the sound
       
       return shots
+   
+   def move(self):
+      #return
+      self.vel_x += random.randint(-1,1)
+      self.vel_y += random.randint(-1,1)
+      super().changeVelocity(self.vel_x,self.vel_y)
+      super().move()
+      
+
+
      
 # Enemy Boss
 
@@ -436,32 +535,91 @@ class Boss(Enemy):
   
    
    
-   def __init__(self):
+   def __init__(self,s_width,s_height):
       
-      super().__init__()
-      self.hitPoints = 20
-      self.damage = 20
+      super().__init__(s_width,s_height)
+      self.hitPoints = 30
+      self.damage = 100
       self.fire_rate = 1500
       self.last_fired = 0
+      self.vel_y = 5
+      self.last_move = 0
+      self.move_rate = 3000
    
 
    def fireWeapon(self):
-       
+      
+      
+      x_dir  = self.target_x-self.rect.x+self.CENTER_CANNON[0]
+      y_dir = self.target_y-self.rect.y+self.CENTER_CANNON[1]
+
+      (x_vel,y_vel) = self.aim(x_dir,y_dir,3)
+      
+      #print("Aiming from (%d,%d) to (%d, %d) at (%d,%d)" % (self.rect.x+self.CENTER_CANNON[0],self.target_y-self.rect.y+self.CENTER_CANNON[1],self.target_x,self.target_y,x_vel,y_vel) )
+   
       now = pygame.time.get_ticks()
       
       shots = []
       
       if now - self.last_fired > self.fire_rate: 
    
-         shots.append( Shot("EnemyBlaster",self.rect.x+self.LEFT_CANNON[0],self.rect.y+self.LEFT_CANNON[1],0,5))
-         shots.append( Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],random.randint(-3,3),random.randint(1,3)))
-         shots.append( Shot("EnemyBlaster",self.rect.x+self.RIGHT_CANNON[0],self.rect.y+self.RIGHT_CANNON[1],0,5))
+         shots.append(Shot("EnemyBlaster",self.rect.x+self.LEFT_CANNON[0],self.rect.y+self.LEFT_CANNON[1],0,5))
+         shots.append(Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],x_vel,y_vel))
+         shots.append(Shot("EnemyBlaster",self.rect.x+self.RIGHT_CANNON[0],self.rect.y+self.RIGHT_CANNON[1],0,5))
 
          self.last_fired = now         
          # Play the sound
       
       return shots
 
+
+   def move(self):
+      
+      dir_x  = self.target_x-self.rect.x+self.CENTER_CANNON[0]
+      dir_y = self.target_y-self.rect.y+self.CENTER_CANNON[1]
+      
+      now = pygame.time.get_ticks()
+      
+      # Ram if you can
+      if False:
+         pass
+#      if abs(self.target_x - self.rect.x) <= self.OBJECT_WIDTH:
+#         if dir_y >= 0:
+#            self.vel_y = 5
+#            self.vel_x = 0
+#         else:
+#            self.vel_y = -3
+#            self.vel_x = 0
+      
+      # otherwise, conventional move
+      
+      else:
+         
+         if now - self.last_move >= self.move_rate:
+            self.vel_y= random.randint(-3,3)
+            self.vel_x = random.randint(-3,3)
+            self.last_move = now
+
+         if self.rect.y >= self.max_y:
+            self.vel_y = -3
+      
+         elif self.rect.y <= 0:
+            self.vel_y = 3
+         
+         
+               
+         if self.rect.x >= self.max_x:
+            self.vel_x = -3
+      
+         elif self.rect.x <= 0:
+            self.vel_x = 3
+         
+         
+      
+      
+      print("Moving (%d,%d)" % (self.vel_x,self.vel_y))
+      
+      super().move()
 
 # Enemy Blaster. We know it's bad because it's red.
 class EnemyBlaster(GameObject):
@@ -478,20 +636,14 @@ class EnemyBlaster(GameObject):
    SS_COORDINATES = [(220, 33, OBJECT_WIDTH, OBJECT_HEIGHT) ]
   
   
-   def __init__(self,vel_x=0,vel_y=5,max_x=800,max_y=600):
+   def __init__(self,s_width,s_height,vel_x=0,vel_y=5):
       
       super().__init__()
       self.damage = 2
       self.vel_x = vel_x
       self.vel_y = vel_y
-      self.max_x = max_x
-      self.max_y = max_y
-
-      
-      
-   
-   def hit(self,colliding_object):
-      pass
+      self.max_x = s_width
+      self.max_y = s_height
    
 
    def validateMove(self):
@@ -516,19 +668,20 @@ class EnemyBullet(GameObject):
    SS_COORDINATES = [(220, 1, OBJECT_WIDTH, OBJECT_HEIGHT) ]
   
    
-   def __init__(self,vel_x=0,vel_y=5,max_x=800,max_y=600):
+   def __init__(self,s_width,s_height,vel_x=0,vel_y=5):
       
       super().__init__()
       self.damage = 2
       self.vel_x = vel_x
       self.vel_y = vel_y
-      self.max_x = max_x
-      self.max_y = max_y
+      self.max_x = s_width
+      self.max_y = s_height
 
-      
-   
-   def hit(self,colliding_object):
-      pass
+   def validateMove(self):
+      # If the bullet has gone off the screen, kill it.
+      if self.rect.x <= 0 or self.rect.y <= 0 or self.rect.y >= self.max_y or self.rect.x >= self.max_x: 
+         
+         self.kill()
 
 # Player Blaster. We know it's good because it's blue.
 class PlayerBlaster(GameObject):
@@ -545,18 +698,15 @@ class PlayerBlaster(GameObject):
    SS_COORDINATES = [(220, 11, OBJECT_WIDTH, OBJECT_HEIGHT) ]
   
   
-   def __init__(self,vel_x=0,vel_y=5,max_x=800,max_y=600):
+   def __init__(self,vel_x=0,vel_y=5):
       
       super().__init__()
       self.damage = 2      
       self.vel_x = vel_x
       self.vel_y = vel_y
-      self.max_x = max_x
-      self.max_y = max_y
-      
+      self.min_x = 0
+      self.min_y = 0
    
-   def hit(self,colliding_object):
-      pass
    
    
    
@@ -575,7 +725,7 @@ class PowerUp(GameObject):
    OBJECT_WIDTH = 57
    OBJECT_HEIGHT = 27
   
-   def __init__(self):
+   def __init__(self,s_width,s_height):
       
       super().__init__()
       
@@ -599,9 +749,9 @@ class ShieldPU(PowerUp):
     
    SS_COORDINATES = [(231, 1, OBJECT_WIDTH, OBJECT_HEIGHT) ]
      
-   def __init__(self):
+   def __init__(self,s_width,s_height):
       
-      super().__init__()
+      super().__init__(s_width,s_height)
       
    
    def hit(self,colliding_object):
@@ -623,10 +773,10 @@ class BonusPU(PowerUp):
    
    SS_COORDINATES = [(290, 1, OBJECT_WIDTH, OBJECT_HEIGHT) ] 
    
-   def __init__(self):
+   def __init__(self,s_width,s_height):
       
-      super().__init__()
-      
+      super().__init__(s_width,s_height)
+    
    
    def hit(self,colliding_object):
       pass
@@ -650,10 +800,10 @@ class PowerPU(PowerUp):
 
    SS_COORDINATES = [(231, 30, OBJECT_WIDTH, OBJECT_HEIGHT) ]
    
-   def __init__(self):
+   def __init__(self,s_width,s_height):
       
-      super().__init__()
-      
+      super().__init__(s_width,s_height)
+    
    
    def hit(self,colliding_object):
       pass
@@ -677,10 +827,10 @@ class XWeaponPU(PowerUp):
    SS_COORDINATES = [(290, 30, OBJECT_WIDTH, OBJECT_HEIGHT) ]
   
  
-   def __init__(self):
+   def __init__(self,s_width,s_height):
       
-      super().__init__()
-      
+      super().__init__(s_width,s_height)
+     
    
    def hit(self,colliding_object):
       pass

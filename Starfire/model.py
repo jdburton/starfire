@@ -62,9 +62,10 @@ class Model():
       
    def createPlayerOne(self):   
       
-      self.playerOne = gameobjects.Player();
+      self.playerOne = gameobjects.Player(self.screen_width,self.screen_height);
       self.playerOne.setImages(self.sprite_images['Player'],400,500)
-      self.playerOne.constrain(self.screen_width,self.screen_height)
+      self.playerOne.reset(400,500);
+      
       
       self.all_objects.add(self.playerOne)
       self.player_objects.add(self.playerOne)                 
@@ -78,19 +79,19 @@ class Model():
       
       for i in range(0,4):
          type = enemy_types[i]
-         #type = "Gunship" 
+          
       
          if type == "Gunship":
-            enemy = gameobjects.Gunship()
+            enemy = gameobjects.Gunship(self.screen_width,self.screen_height)
          elif type == "Drone":
-            enemy = gameobjects.Drone()
+            enemy = gameobjects.Drone(self.screen_width,self.screen_height)
          elif type == "Dart":
-            enemy = gameobjects.Dart()
+            enemy = gameobjects.Dart(self.screen_width,self.screen_height)
          elif type == "Boss":
-            enemy = gameobjects.Boss()
+            enemy = gameobjects.Boss(self.screen_width,self.screen_height)
          
          enemy.setImages(self.sprite_images[type],50+(i*180),100)
-         enemy.constrain(self.screen_width,self.screen_height)
+         #enemy.constrain(self.screen_width,self.screen_height)
          self.all_objects.add(enemy)
          self.enemy_objects.add(enemy)                 
 
@@ -103,30 +104,33 @@ class Model():
  
          
    def movePlayer(self,x,y):
-      self.playerOne.move(x,y)     
+      
+      self.playerOne.moveTo(self.playerOne.rect.x+x,self.playerOne.rect.y+y)     
    
    def movePlayerTo(self,x,y): 
       self.playerOne.moveTo(x,y)
    
    def moveObjects(self):
-      for sprite in self.enemy_objects:
-         sprite.move()
-         self.fireEnemyWeapons(sprite)
+      for enemy in self.enemy_objects:
+         enemy.acquireTarget(self.playerOne)
+         enemy.move()
+         self.fireEnemyWeapons(enemy)
       for sprite in self.shot_objects:
          sprite.move()
       for sprite in self.enemy_shot_objects:
          sprite.move()
 
    def fireEnemyWeapons(self,enemy):
+      
       shots = enemy.fireWeapon()
       for cannon in shots:
          if cannon is not None:
             if cannon.name == "EnemyBlaster":
-               blast = gameobjects.EnemyBlaster(cannon.x_vel,cannon.y_vel,self.screen_width,self.screen_height)
+               blast = gameobjects.EnemyBlaster(self.screen_width,self.screen_height,cannon.x_vel,cannon.y_vel)
                blast.setImages(self.sprite_images[cannon.name],cannon.x_pos,cannon.y_pos)
                self.enemy_shot_objects.add(blast)    
             elif cannon.name == "EnemyBullet":
-               blast = gameobjects.EnemyBullet(cannon.x_vel,cannon.y_vel,self.screen_width,self.screen_height)
+               blast = gameobjects.EnemyBullet(self.screen_width,self.screen_height,cannon.x_vel,cannon.y_vel)
                blast.setImages(self.sprite_images[cannon.name],cannon.x_pos,cannon.y_pos)
                self.enemy_shot_objects.add(blast)       
  
@@ -138,7 +142,7 @@ class Model():
       
       for cannon in shots:
          if cannon is not None:
-            blast = gameobjects.PlayerBlaster(cannon.x_vel,cannon.y_vel,self.screen_width,self.screen_height)
+            blast = gameobjects.PlayerBlaster(cannon.x_vel,cannon.y_vel)
             blast.setImages(self.sprite_images["PlayerBlaster"],cannon.x_pos,cannon.y_pos)
             self.shot_objects.add(blast)
       
@@ -178,7 +182,7 @@ class Model():
    
    def checkDeath(self,object):
          # Is the object dead?
-         if object.hitPoints <= 0:
+         if object.hitPoints <= 0 and object.alive():
             explosion = gameobjects.Explosion()
             explosion.setImages(self.sprite_images['Explosion'],object.rect.x,object.rect.y)
             self.explosion_objects.add(explosion)
