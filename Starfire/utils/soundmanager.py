@@ -22,7 +22,7 @@ class SoundManager():
       self.sounds['Warn2'] = pygame.mixer.Sound('sounds/killed2.wav')
       self.sounds['Begin'] = pygame.mixer.Sound('sounds/begin2.wav')
       self.sounds['Dying'] = pygame.mixer.Sound('sounds/dying.wav')
-      self.sounds['Hit'] = pygame.mixer.Sound('sounds/HITSHIELD.wav')
+      self.sounds['Hit'] = pygame.mixer.Sound('sounds/HITSHIELD.WAV')
       
 
    
