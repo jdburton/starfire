@@ -30,7 +30,30 @@ class Controller():
       self.move_left = False
       self.move_right = False
       
-      
+   
+   def pauseLoop(self):
+      (x,y) = self.releaseMouse()
+
+      m_pos = pygame.mixer.music.get_pos()
+      print("Pausing at ",m_pos)
+      pygame.mixer.music.stop()
+      # wait to unpause
+      while True:
+         for unpause in pygame.event.get():
+            if unpause.type == QUIT or (unpause.type == KEYUP and unpause.key == K_ESCAPE):
+               sys.exit()
+            elif unpause.type == KEYDOWN and unpause.key == K_p:
+               self.grabMouse(x,y)
+               try:
+                  pygame.mixer.music.set_pos(m_pos)
+               except:
+                  print("Warning: Setting music position not supported for this file type. Restarting")
+               pygame.mixer.music.play(-1)
+               
+               return
+               
+
+         time.sleep(1)     
    
    
    
@@ -55,7 +78,11 @@ class Controller():
                self.move_right = True
             elif (event.key == K_SPACE):
                self.fire = True
-
+            elif (event.key == K_p):
+               self.pauseLoop()
+               
+               
+               
          elif (event.type == KEYUP):
             if (event.key == K_UP):
                self.move_up = False
@@ -132,10 +159,18 @@ class Controller():
    def stopMusic(self):
       pygame.mixer.music.fadeout(1000)
    
-
-   def mainLoop(self):
+   def grabMouse(self,x=0,y=0):
       pygame.mouse.set_visible(False)
       pygame.event.set_grab(True)
+      pygame.mouse.set_pos([x,y])
+      
+   def releaseMouse(self):
+      pygame.mouse.set_visible(True)
+      pygame.event.set_grab(False)
+      return pygame.mouse.get_pos()
+
+   def mainLoop(self):
+      self.grabMouse(SCREEN_WIDTH/2,SCREEN_HEIGHT-100)
       self.gameLoop()
 
    def gameLoop(self):

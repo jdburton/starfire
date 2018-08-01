@@ -165,7 +165,7 @@ class Player(GameObject):
 
       self.fire_level = 0
       self.active_cannons = (True,True,True)
-      self.fire_rate = self.BASE_FIRE_RATE/4
+      self.fire_rate = self.BASE_FIRE_RATE
       self.last_fired = 0
      
       # Constrain to the screen.
@@ -211,7 +211,7 @@ class Player(GameObject):
    def reset(self):
       
       self.hit_points = self.MAX_HIT_POINTS
-      self.fire_rate = self.BASE_FIRE_RATE/4
+      self.fire_rate = self.BASE_FIRE_RATE
       self.fire_level = 0
       self.rect.x = self.start_x
       self.rect.y = self.start_y
