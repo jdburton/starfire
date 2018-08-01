@@ -1,12 +1,18 @@
 import Starfire.utils.background as background
-import Starfire.utils.spritesheet as spritesheet
+
 import Starfire.gameobjects as gameobjects
 import pygame
+import random
+
 
 class Model():
 
    
    def __init__(self,width,height):
+      
+      self.sound_state = {}
+      
+       
 
       self.screen_width = width
       self.screen_height = height
@@ -16,13 +22,11 @@ class Model():
       self.sprite_images = {}
       
       
-      # sprite group for all objects
       # sprite group for player
       # sprite group for enemies
       # sprite group for shots
       # sprite group for enemy shots
       # sprite group for power ups
-      self.all_objects = pygame.sprite.Group() #Is this redundant?
       self.player_objects = pygame.sprite.Group()
       self.enemy_objects = pygame.sprite.Group()
       self.enemy_shot_objects = pygame.sprite.Group()
@@ -30,81 +34,66 @@ class Model():
       self.powerup_objects = pygame.sprite.Group()
       self.explosion_objects = pygame.sprite.Group()
       
-      self.lives = 3
+      self.lives = 0
+      self.enemy_rate = 0
+      self.last_enemy = 0
       
 
    
    def initGame(self):
       
-    
-      self.loadImagesFromSheet()
       self.createPlayerOne()
-      self.createEnemies()
       
-   def loadImagesFromSheet(self):
       
-      self.ss = spritesheet.spritesheet(gameobjects.SPRITESHEET)
    
-      self.sprite_images['Player'] = self.ss.images_at( gameobjects.Player.SS_COORDINATES, gameobjects.CK)
-      self.sprite_images['Explosion'] = self.ss.images_at( gameobjects.Explosion.SS_COORDINATES, gameobjects.CK)
-      self.sprite_images['Gunship'] = self.ss.images_at( gameobjects.Gunship.SS_COORDINATES, gameobjects.CK)
-      self.sprite_images['Dart'] = self.ss.images_at( gameobjects.Dart.SS_COORDINATES, gameobjects.CK)
-      self.sprite_images['Drone'] = self.ss.images_at( gameobjects.Drone.SS_COORDINATES, gameobjects.CK)
-      self.sprite_images['Boss'] = self.ss.images_at( gameobjects.Boss.SS_COORDINATES, gameobjects.CK)
-      self.sprite_images['PlayerBlaster'] = self.ss.images_at( gameobjects.PlayerBlaster.SS_COORDINATES, gameobjects.CK)
-      self.sprite_images['EnemyBlaster'] = self.ss.images_at( gameobjects.EnemyBlaster.SS_COORDINATES, gameobjects.CK)
-      self.sprite_images['EnemyBullet'] = self.ss.images_at( gameobjects.EnemyBullet.SS_COORDINATES, gameobjects.CK)
-      self.sprite_images['XWeaponPU'] = self.ss.images_at( gameobjects.XWeaponPU.SS_COORDINATES, gameobjects.CK)
-      self.sprite_images['BonusPU'] = self.ss.images_at( gameobjects.BonusPU.SS_COORDINATES, gameobjects.CK)
-      self.sprite_images['PowerPU'] = self.ss.images_at( gameobjects.PowerPU.SS_COORDINATES, gameobjects.CK)
-      self.sprite_images['ShieldPU'] = self.ss.images_at( gameobjects.ShieldPU.SS_COORDINATES, gameobjects.CK)
-      
-      
    def createPlayerOne(self):   
       
-      self.playerOne = gameobjects.Player(self.screen_width,self.screen_height);
-      self.playerOne.setImages(self.sprite_images['Player'],400,500)
-      self.playerOne.reset(400,500);
-      
-      
-      self.all_objects.add(self.playerOne)
+      self.playerOne = gameobjects.Player(self.sprite_images['Player'],self.screen_width/2,(self.screen_height-gameobjects.Player.OBJECT_HEIGHT),self.screen_width,self.screen_height);
+      self.playerOne.reset();
       self.player_objects.add(self.playerOne)                 
 
    
    
-   def createEnemies(self):   
+   def createEnemies(self): 
       
-      enemy_types = [ 'Gunship', 'Drone', 'Boss', 'Dart' ]
-      enemy = None
+      enemy_types = [ 'Gunship', 'Drone', 'Dart','Boss' ]
       
-      for i in range(0,4):
-         type = enemy_types[i]
-          
+      now = pygame.time.get_ticks()
       
-         if type == "Gunship":
-            enemy = gameobjects.Gunship(self.screen_width,self.screen_height)
-         elif type == "Drone":
-            enemy = gameobjects.Drone(self.screen_width,self.screen_height)
-         elif type == "Dart":
-            enemy = gameobjects.Dart(self.screen_width,self.screen_height)
-         elif type == "Boss":
-            enemy = gameobjects.Boss(self.screen_width,self.screen_height)
-         
-         enemy.setImages(self.sprite_images[type],50+(i*180),100)
-         #enemy.constrain(self.screen_width,self.screen_height)
-         self.all_objects.add(enemy)
-         self.enemy_objects.add(enemy)                 
+      if now - self.last_enemy < self.enemy_rate:  
+         return
+      
+      
+      type_idx = int(random.randint(0,9) / 3) ;
+   
+      type = enemy_types[type_idx]
+      
+      pos_x = random.randint(50,self.screen_width - 50)
+      
+      if type == "Gunship":
+         enemy = gameobjects.Gunship(self.sprite_images[type],pos_x,0,self.screen_width,self.screen_height)
+      elif type == "Drone":
+         enemy = gameobjects.Drone(self.sprite_images[type],pos_x,0,self.screen_width,self.screen_height)
+      elif type == "Dart":
+         enemy = gameobjects.Dart(self.sprite_images[type],pos_x,0,self.screen_width,self.screen_height)
+      elif type == "Boss":
+         enemy = gameobjects.Boss(self.sprite_images[type],pos_x,0,self.screen_width,self.screen_height)
+      
+      self.enemy_objects.add(enemy)  
+      
+      self.last_enemy = now
+      self.enemy_rate = random.randint(1000,5000)       
 
    
    def animate(self):
-      for object in self.all_objects:
+      self.playerOne.animate()
+      for object in self.enemy_objects:
          object.animate()
       for explosion in self.explosion_objects:
          explosion.animate()
  
          
-   def movePlayer(self,x,y):
-      
+   def movePlayer(self,x,y):   
       self.playerOne.moveTo(self.playerOne.rect.x+x,self.playerOne.rect.y+y)     
    
    def movePlayerTo(self,x,y): 
@@ -126,14 +115,12 @@ class Model():
       for cannon in shots:
          if cannon is not None:
             if cannon.name == "EnemyBlaster":
-               blast = gameobjects.EnemyBlaster(self.screen_width,self.screen_height,cannon.x_vel,cannon.y_vel)
-               blast.setImages(self.sprite_images[cannon.name],cannon.x_pos,cannon.y_pos)
-               self.enemy_shot_objects.add(blast)    
+               blast = gameobjects.EnemyBlaster(self.sprite_images[cannon.name],cannon.x_pos,cannon.y_pos,self.screen_width,self.screen_height,cannon.x_vel,cannon.y_vel)   
             elif cannon.name == "EnemyBullet":
-               blast = gameobjects.EnemyBullet(self.screen_width,self.screen_height,cannon.x_vel,cannon.y_vel)
-               blast.setImages(self.sprite_images[cannon.name],cannon.x_pos,cannon.y_pos)
-               self.enemy_shot_objects.add(blast)       
- 
+               blast = gameobjects.EnemyBullet(self.sprite_images[cannon.name],cannon.x_pos,cannon.y_pos,self.screen_width,self.screen_height,cannon.x_vel,cannon.y_vel)
+
+         self.enemy_shot_objects.add(blast)       
+         self.sound_state['EnemyBlaster'] = True
    
    def fireWeapon(self):
       
@@ -142,18 +129,25 @@ class Model():
       
       for cannon in shots:
          if cannon is not None:
-            blast = gameobjects.PlayerBlaster(cannon.x_vel,cannon.y_vel)
-            blast.setImages(self.sprite_images["PlayerBlaster"],cannon.x_pos,cannon.y_pos)
+            blast = gameobjects.PlayerBlaster(self.sprite_images["PlayerBlaster"],cannon.x_pos,cannon.y_pos,cannon.x_vel,cannon.y_vel)
             self.shot_objects.add(blast)
       
-   def collisionDetection(self):
+      # Restrict blaster fire to three sound channels.
+      self.sound_state['Blaster'] = True
       
+      #for id in range(0,2):
+      #   channel = pygame.mixer.Channel(id)
+      #   if not channel.get_busy():
+      #      channel.play(self.sound_manager['Blaster'])
+      
+   def collisionDetection(self):
+      hp = -1 
       # enemy vs enemy = Bounce
       collided_enemies = pygame.sprite.groupcollide(self.enemy_objects, self.enemy_objects, False, False)
       for enemy in collided_enemies:
          if len(collided_enemies[enemy]) > 1: 
-            enemy.vel_x = int(-enemy.vel_x/2)
-            enemy.vel_y = int(-enemy.vel_y/2)
+            enemy.bounce()
+
 
       # Player vs enemy = damage to both            
       player_hits = pygame.sprite.groupcollide(self.enemy_objects, self.player_objects, False, False)
@@ -161,9 +155,6 @@ class Model():
          enemy.hit(self.playerOne)
          self.playerOne.hit(enemy)
          self.checkDeath(enemy)
-      
-      
-         
       
       # Blaster vs enemy: Kill blaster, damage enemy
       blaster_hits = pygame.sprite.groupcollide(self.shot_objects, self.enemy_objects, True, False )
@@ -176,19 +167,36 @@ class Model():
       blaster_hits = pygame.sprite.groupcollide(self.enemy_shot_objects, self.player_objects, True, False )
       for hit in blaster_hits.keys():
          player = blaster_hits[hit][0]
-         player.hit(hit)
+         hp = player.hit(hit)
       
-      self.checkDeath(self.playerOne)
+      if self.checkDeath(self.playerOne):
+         self.sound_state['Dying'] = True
+      elif hp == 1 and self.playerOne.warned == 0:
+         if random.randint(0,1):
+            
+            self.sound_state['Warn1'] = True
+         else:
+            
+            self.sound_state['Warn1'] = True
+         self.playerOne.warned = 1
+      elif hp > 1:
+         self.sound_state['Hit'] = True
+         
+      
+          
    
    def checkDeath(self,object):
          # Is the object dead?
-         if object.hitPoints <= 0 and object.alive():
-            explosion = gameobjects.Explosion()
-            explosion.setImages(self.sprite_images['Explosion'],object.rect.x,object.rect.y)
-            self.explosion_objects.add(explosion)
+         if object.hit_points <= 0 and object.alive():
+            self.createExplosion(object.rect.x,object.rect.y)
             object.kill()
             return True
          return False
+      
+   def createExplosion(self,x,y):
+      explosion = gameobjects.Explosion(self.sprite_images['Explosion'],x,y)
+      self.explosion_objects.add(explosion)
+      self.sound_state['Explosion'] = True
    
    def checkGameOver(self):
       
@@ -197,7 +205,7 @@ class Model():
 
             self.lives -= 1
             print("lives remaining %d" % self.lives)
-            self.playerOne.reset(400,500);
+            self.playerOne.reset();
             self.player_objects.add(self.playerOne)
             
          else:

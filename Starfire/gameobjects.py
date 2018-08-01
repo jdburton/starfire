@@ -2,10 +2,37 @@
 import pygame
 import random
 import math
+import Starfire.utils.spritesheet as spritesheet
+ 
 
-   
 SPRITESHEET='images/newsprites.bmp'
 CK=(255,0,255)
+
+
+# Utility to load images from the sprite sheet.
+# returns a dictionary of images.
+
+def loadImagesFromSheet():
+   
+   ss = spritesheet.spritesheet(SPRITESHEET)
+   
+   sprite_images = {}
+
+   sprite_images['Player'] = ss.images_at( Player.SS_COORDINATES, CK)
+   sprite_images['Explosion'] = ss.images_at( Explosion.SS_COORDINATES, CK)
+   sprite_images['Gunship'] = ss.images_at( Gunship.SS_COORDINATES, CK)
+   sprite_images['Dart'] = ss.images_at( Dart.SS_COORDINATES, CK)
+   sprite_images['Drone'] = ss.images_at( Drone.SS_COORDINATES, CK)
+   sprite_images['Boss'] = ss.images_at( Boss.SS_COORDINATES, CK)
+   sprite_images['PlayerBlaster'] = ss.images_at( PlayerBlaster.SS_COORDINATES, CK)
+   sprite_images['EnemyBlaster'] = ss.images_at( EnemyBlaster.SS_COORDINATES, CK)
+   sprite_images['EnemyBullet'] = ss.images_at( EnemyBullet.SS_COORDINATES, CK)
+   sprite_images['XWeaponPU'] = ss.images_at( XWeaponPU.SS_COORDINATES, CK)
+   sprite_images['BonusPU'] = ss.images_at( BonusPU.SS_COORDINATES, CK)
+   sprite_images['PowerPU'] = ss.images_at( PowerPU.SS_COORDINATES, CK)
+   sprite_images['ShieldPU'] = ss.images_at( ShieldPU.SS_COORDINATES, CK)
+   
+   return sprite_images
 
 # Data structure for shots fired.
 class Shot():
@@ -20,23 +47,23 @@ class Shot():
 # Generic GameObject class. 
 # All GameObjects are Sprites with game specific data and functionality.
 
-
-
 class GameObject(pygame.sprite.Sprite):
    
    OBJECT_WIDTH = 0
    OBJECT_HEIGHT = 0
    FRAME_HOLD = 5
 
-   def __init__(self):
+   def __init__(self,images = [],rect_x=0,rect_y=0,s_width=800,s_height=600):
       super().__init__()
       self.object_images = []
       self.object_frame = 0
       self.vel_x = 0
       self.vel_y = 0
-      self.hitPoints = 1
+      self.hit_points = 1
       self.damage = 0
-      
+      self.setImages(images, rect_x, rect_y)
+
+   # Constrain: Keep the images within the bounds of the screen 
 
    def constrain(self,width, height):
       self.max_x = width - self.OBJECT_WIDTH
@@ -44,12 +71,14 @@ class GameObject(pygame.sprite.Sprite):
       #print("Max x: %d Max y: %d" % (self.max_x, self.max_y))
       
 
-   def setImages(self,images,x_pos,y_pos,d_images=[]):
+   # setImages: "Private" method to set the image and position of the sprite.
+
+   def setImages(self,images,rect_x,rect_y):
       self.object_images = images
       self.image = self.object_images[self.object_frame]
       self.rect = self.image.get_rect()
-      self.rect.x = x_pos
-      self.rect.y = y_pos
+      self.rect.x = rect_x
+      self.rect.y = rect_y
    
    # I'm sure there is a better way to do this, but it works well enough.
    def animate(self):
@@ -57,36 +86,38 @@ class GameObject(pygame.sprite.Sprite):
       self.object_frame += 1 
       self.image = self.object_images[int(self.object_frame/self.FRAME_HOLD) % len(self.object_images) ]
   
+   # Change the velocity of the object
    def changeVelocity(self,x=0,y=0):
       self.vel_x = x
       self.vel_y = y
       
-   
+   # Move the object by adding the current velocity to the position.
    def move(self):
       self.rect.x += self.vel_x
       self.rect.y += self.vel_y
       self.validateMove()
    
+   # Move the object directly to (x,y)
    def moveTo(self,x_coord,y_coord):
       self.rect.x = x_coord
       self.rect.y = y_coord
       self.validateMove()
    
+   # Validate that the next move is valid. Will be overridden in subclasses
    def validateMove(self):
-      #print ("Validating (%d,%d)" % (self.rect.x,self.rect.y))
       pass
-   
-    
-      
+ 
+   # Calculate damage from being hit by a colliding object.     
    def hit(self,colliding_object):
-      self.hitPoints -= colliding_object.damage
+      self.hit_points -= colliding_object.damage
+      return self.hit_points
    
-# Object for Player Sprite
 
+# Class for Player Sprite
 class Player(GameObject):
    
-   
-   
+   # Constants
+      
    OBJECT_WIDTH = 72
    OBJECT_HEIGHT = 73
    SS_COORDINATES = [(1, 1, OBJECT_WIDTH, OBJECT_HEIGHT),
@@ -96,21 +127,49 @@ class Player(GameObject):
    CENTER_CANNON = ((OBJECT_WIDTH/2)-4,-12)
    RIGHT_CANNON = (1, 17)
    LEFT_CANNON =  (OBJECT_WIDTH-9,17)
-  
+   
+   MAX_HIT_POINTS = 10  
+   BASE_FIRE_RATE = 500
+   MIN_FIRE_RATE = 125
   
    
-   
-   def __init__(self,s_width,s_height):
+   def __init__(self,images,rect_x,rect_y,s_width,s_height):
       
-      super().__init__()
-      self.damage = 10
-      self.hitPoints = 10
+      super().__init__(images,rect_x,rect_y)
+      
+      # Starting position
+      self.start_x = rect_x
+      self.start_y = rect_y
+      
+      # Time created
       self.time_created = pygame.time.get_ticks()
-      self.fire_rate = 500
+      
+      # Collision damage to other objects
+      self.damage = 10
+      
+      # Hit points
+      self.hit_points = self.MAX_HIT_POINTS
+      
+      self.warned = 0
+   
+      
+      # TODO: Implement fire levels:
+
+      # Level 0: Single fire
+      # Level 1: Dual fire
+      # Level 2: Triple fire
+      # Level 3: Rapid (2x) fire
+      # Level 4: Turbo (4x) fire
+
+      self.fire_level = 2
+      self.active_cannons = (True,True,True)
+      self.fire_rate = self.BASE_FIRE_RATE
       self.last_fired = 0
+     
+      # Constrain to the screen.
       self.constrain(s_width,s_height)
       
-      
+   # Fire your weapon   
    def fireWeapon(self):
       
        
@@ -119,47 +178,43 @@ class Player(GameObject):
       shots = []
       
       if now - self.last_fired > self.fire_rate: 
-   
-         shots.append(Shot("PlayerBlaster",self.rect.x+self.LEFT_CANNON[0],self.rect.y+self.LEFT_CANNON[1],0,-5))
-         shots.append(Shot("PlayerBlaster",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],0,-5))
-         shots.append(Shot("PlayerBlaster",self.rect.x+self.RIGHT_CANNON[0],self.rect.y+self.RIGHT_CANNON[1],0,-5))
+         if self.active_cannons[0] is True:
+            shots.append(Shot("PlayerBlaster",self.rect.x+self.LEFT_CANNON[0],self.rect.y+self.LEFT_CANNON[1],0,-5))
+         if self.active_cannons[1] is True:
+            shots.append(Shot("PlayerBlaster",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],0,-5))
+         if self.active_cannons[2] is True:
+            shots.append(Shot("PlayerBlaster",self.rect.x+self.RIGHT_CANNON[0],self.rect.y+self.RIGHT_CANNON[1],0,-5))
 
          self.last_fired = now         
-         # Play the sound
+         
 
-         sound = pygame.mixer.Sound('sounds/blaster.wav')
-         sound.play()
-      
       return shots
        
    
-   def reset(self,x,y):
-      self.hitPoints = 10
-      self.rect.x = x
-      self.rect.y = y
+   def reset(self):
+      
+      self.hit_points = self.MAX_HIT_POINTS
+      self.fire_rate = self.BASE_FIRE_RATE
+      self.fire_level = 2
+      self.rect.x = self.start_x
+      self.rect.y = self.start_y
       self.time_created = pygame.time.get_ticks()
-      pygame.mouse.set_pos([x,y])
+      pygame.mouse.set_pos([self.start_x,self.start_y])
+      self.warned = 0
       
    def hit(self,colliding_object):
       
       now = pygame.time.get_ticks()
       # Five second delay for damage
-      print ("now: %d created %d age %d" % (now, self.time_created, now - self.time_created))
-      if now - self.time_created > 300:
+      #print ("now: %d created %d age %d" % (now, self.time_created, now - self.time_created))
+      if now - self.time_created > 5000:
          super().hit(colliding_object)
-      if colliding_object.damage > 0:
-         if self.hitPoints > 1: 
-            sound = pygame.mixer.Sound('sounds/ehitshield.wav')
-            sound.play()
-         elif self.hitPoints == 1: 
-            sound = pygame.mixer.Sound('sounds/killed2.wav')
-            sound.play()
-      
-   def kill(self):
-      super().kill()
-      
-      sound = pygame.mixer.Sound('sounds/dying.wav')
-      sound.play()
+      if colliding_object.damage == 0:
+         return -1
+      else:
+         return self.hit_points 
+            
+   
       
    # Keep the player on the screen.
    def validateMove(self):
@@ -179,25 +234,13 @@ class Player(GameObject):
          self.vel_y = 0
       
 
-   
+# Class for the explosion   
 class Explosion(GameObject):
    
-   
-   '''
-   g_pSprite[EXPLOSION_OBJECT] = new CClippedSprite(5,99,99);
-   '''
-   
+
    OBJECT_WIDTH = 99
    OBJECT_HEIGHT = 99
-   
-   '''
-   
-   result = result && g_pSprite[EXPLOSION_OBJECT]->load(&g_cSpriteImages,0,1,136);
-   result = result && g_pSprite[EXPLOSION_OBJECT]->load(&g_cSpriteImages,1,101,136);
-   result = result && g_pSprite[EXPLOSION_OBJECT]->load(&g_cSpriteImages,2,301,136);
-   result = result && g_pSprite[EXPLOSION_OBJECT]->load(&g_cSpriteImages,3,201,136);
-   result = result && g_pSprite[EXPLOSION_OBJECT]->load(&g_cSpriteImages,4,401,136);
-   '''
+
    
    SS_COORDINATES = [   (1,136,OBJECT_WIDTH, OBJECT_HEIGHT),
                             (101,136,OBJECT_WIDTH, OBJECT_HEIGHT),
@@ -207,39 +250,38 @@ class Explosion(GameObject):
    
    
    
-   def __init__(self):
+   def __init__(self,images,rect_x,rect_y):
       
-      super().__init__()
+      super().__init__(images,rect_x,rect_y)
    
    def animate(self):
       super().animate()
+      # If we've been through one cycle, kill the explosion.
       if self.object_frame/self.FRAME_HOLD >= len(self.object_images):
          self.kill()
          self.object_frame = 0
       
-   
+   # Explosions don't care about being hit.
    def hit(self,colliding_object):
-      pass
+      return 0
 
 
 
 
 # Generic Enemy Class
+# This has functionality common to multiple enemies
 
 class Enemy(GameObject):
    
    
 
-   
-   def __init__(self,s_width,s_height):
+   # All enemies are constrained to screen by default.
+   def __init__(self,images,rect_x,rect_y,s_width,s_height):
       
-      super().__init__()
+      super().__init__(images,rect_x,rect_y)
       self.constrain(s_width,s_height)
       
-   
-   
-
-   
+ 
    def move(self):
       #return
       #self.vel_x += random.randint(-1,1)
@@ -247,38 +289,33 @@ class Enemy(GameObject):
       #super().changeVelocity(self.vel_x,self.vel_y)
       super().move()
 
-   
+   # kill and explode   
    def kill(self):
       super().kill()
-      sound = pygame.mixer.Sound('sounds/EXPLOSION.WAV')
-      sound.play()
-      
+
+    
+   # Returns empty list so python won't complain. To be overridden in subclasses.  
    def fireWeapon(self):
       return []
     
+   # Acquire the target.
    def acquireTarget(self,starfire):
       self.target_x = starfire.rect.x
       self.target_y = starfire.rect.y  
       
     
-   # Use trig to aim the shot.
+   # Aims the shot at (x_dir,y_dir) at s_vel speed.
+   # returns shot velocity vector in x,y coordinates.
    def aim(self,x_dir,y_dir,s_vel):  
+      
+      # Find the angle
       theta = math.atan2(y_dir,x_dir)
+   
       
-      if (theta == 0):
-         x_vel = s_vel
-         y_vel = 0
-      elif (theta == 1):
-         y_vel = s_vel
-         x_vel = 0
-      else:
-         x_vel = int((s_vel/math.sin(theta))+0.5)
-         y_vel = int((s_vel/math.cos(theta))+0.5)
+      x_vel = int((s_vel*math.cos(theta))+0.5)
+      y_vel = int((s_vel*math.sin(theta))+0.5)
       
-      if (y_vel < 0):
-         x_vel = -x_vel
-         y_vel = -y_vel  
-      
+ 
       return (x_vel,y_vel)
    
    # Standard enemy move validation: Keep the enemy on the screen.
@@ -299,43 +336,43 @@ class Enemy(GameObject):
          self.rect.y = 0
          self.vel_y = 0
    
-# Enemy Gunship
+   # Enemies bounce off each other when they collide. 
+   def bounce(self):
+      return
 
+
+
+# Enemy Gunship
 class Gunship(Enemy):
    
-   '''
-   g_pSprite[GUNSHIP_OBJECT]= new CClippedSprite(4,73,58);
-   '''
    
    OBJECT_WIDTH = 73
    OBJECT_HEIGHT = 58
-   CENTER_CANNON = None
+   
    LEFT_CANNON = (5, OBJECT_HEIGHT-10)
    RIGHT_CANNON =  (OBJECT_WIDTH-13,OBJECT_HEIGHT-10)
    CENTER_CANNON = OBJECT_WIDTH / 2, OBJECT_HEIGHT-15
    
-   '''
-   result = result && g_pSprite[GUNSHIP_OBJECT]->load(&g_cSpriteImages,0,1,75);
-   result = result && g_pSprite[GUNSHIP_OBJECT]->load(&g_cSpriteImages,1,76,75);
-   result = result && g_pSprite[GUNSHIP_OBJECT]->load(&g_cSpriteImages,2,150,75);
-   result = result && g_pSprite[GUNSHIP_OBJECT]->load(&g_cSpriteImages,3,226,75);
-   '''
    
    SS_COORDINATES = [(1, 75, OBJECT_WIDTH, OBJECT_HEIGHT),
                      (76,75, OBJECT_WIDTH, OBJECT_HEIGHT),
                      (150,75, OBJECT_WIDTH, OBJECT_HEIGHT),
                      (226,75, OBJECT_WIDTH, OBJECT_HEIGHT) ]
+   
+   MAX_HIT_POINTS = 7  
+   BASE_FIRE_RATE = 1500
+
   
 
-   def __init__(self,s_width,s_height):
+   def __init__(self,images,rect_x,rect_y,s_width,s_height):
       
-      super().__init__(s_width,s_height)
-      self.hitPoints = 7
+      super().__init__(images,rect_x,rect_y,s_width,s_height)
+      self.hit_points = self.MAX_HIT_POINTS
       self.damage = 5
-      self.fire_rate = 1500
+      self.fire_rate = self.BASE_FIRE_RATE
       self.last_fired = 0
-      self.target_x = 400
-      self.target_y = 500
+      self.target_x = s_width/2
+      self.target_y = s_height-50
       
    
    
@@ -348,7 +385,7 @@ class Gunship(Enemy):
 
       (x_vel,y_vel) = self.aim(x_dir,y_dir,3)
       
-      #print("Aiming from (%d,%d) to (%d, %d) at (%d,%d)" % (self.rect.x+self.CENTER_CANNON[0],self.target_y-self.rect.y+self.CENTER_CANNON[1],self.target_x,self.target_y,x_vel,y_vel) )
+      #print("Gunship: Aiming from (%d,%d) to (%d, %d) at (%d,%d)" % (self.rect.x+self.CENTER_CANNON[0],self.target_y-self.rect.y+self.CENTER_CANNON[1],self.target_x,self.target_y,x_vel,y_vel) )
    
       now = pygame.time.get_ticks()
       
@@ -361,12 +398,11 @@ class Gunship(Enemy):
          shots.append(Shot("EnemyBlaster",self.rect.x+self.RIGHT_CANNON[0],self.rect.y+self.RIGHT_CANNON[1],0,5))
 
          self.last_fired = now         
-         # Play the sound
       
       return shots
    
    def move(self):
-      #return
+      
       self.vel_x += random.randint(-1,1)
       self.vel_y += random.randint(-1,1)
       super().changeVelocity(self.vel_x,self.vel_y)
@@ -378,37 +414,28 @@ class Gunship(Enemy):
 # Enemy Dart Fighter
 
 class Dart(Enemy):
-   
-   '''
-   g_pSprite[DART_OBJECT] = new CClippedSprite(4,71,68);
-   '''
+
    
    OBJECT_WIDTH = 71
    OBJECT_HEIGHT = 68
    CANNON = OBJECT_WIDTH / 2, OBJECT_HEIGHT
    
-   '''
-      //========= Dart =======//
-   result = result && g_pSprite[DART_OBJECT]->load(&g_cSpriteImages,0,1,306);
-   result = result && g_pSprite[DART_OBJECT]->load(&g_cSpriteImages,1,147,306);
-   result = result && g_pSprite[DART_OBJECT]->load(&g_cSpriteImages,2,74,306);
-   result = result && g_pSprite[DART_OBJECT]->load(&g_cSpriteImages,3,220,306);
-   
-   '''
+
    SS_COORDINATES = [(1, 306, OBJECT_WIDTH, OBJECT_HEIGHT),
                      (147, 306, OBJECT_WIDTH, OBJECT_HEIGHT),
                      (74, 306, OBJECT_WIDTH, OBJECT_HEIGHT),
                      (220, 306, OBJECT_WIDTH, OBJECT_HEIGHT) ]
   
-  
+   MAX_HIT_POINTS = 3  
+   BASE_FIRE_RATE = 1500  
    
    
-   def __init__(self,s_width,s_height):
+   def __init__(self,images,rect_x,rect_y,s_width,s_height):
       
-      super().__init__(s_width,s_height)
-      self.hitPoints = 2
-      self.damage = 4
-      self.fire_rate = 2000
+      super().__init__(images,rect_x,rect_y,s_width,s_height)
+      self.hit_points = self.MAX_HIT_POINTS
+      self.damage = 5
+      self.fire_rate = self.BASE_FIRE_RATE
       self.last_fired = 0
       self.max_y = s_height+self.OBJECT_HEIGHT
       
@@ -418,25 +445,24 @@ class Dart(Enemy):
       
       shots = []
       
-      if now - self.last_fired > self.fire_rate: 
-   
-         
+      if now - self.last_fired > self.fire_rate:          
          shots.append( Shot("EnemyBullet",self.rect.x+self.CANNON[0],self.rect.y+self.CANNON[1],random.randint(-3,3),random.randint(1,3)))
-
-         self.last_fired = now         
-         # Play the sound
+         self.last_fired = now
       
       return shots
    
+   # Attempt to ram the player
    def move(self):
       
-      dir_x  = self.target_x-self.rect.x+self.CANNON[0]
-      dir_y = self.target_y-self.rect.y+self.CANNON[1]
+      self.vel_x = (self.target_x-self.rect.x+self.CANNON[0])/40
+
+      #dir_y = self.target_y-self.rect.y+self.CANNON[1]
       
-      (self.vel_x,discard) = self.aim(dir_x,dir_y,8)
-      self.vel_y = 8
+      #(self.vel_x,discard) = self.aim(dir_x,dir_y,8)
+       
+      self.vel_y = 15
       
-      print("Moving (%d,%d)" % (self.vel_y,self.vel_y))
+      #print("Moving (%d,%d)" % (self.vel_y,self.vel_y))
       
       super().move()
       
@@ -444,14 +470,12 @@ class Dart(Enemy):
    def validateMove(self):
       if self.rect.y >= self.max_y:
          self.kill()
- 
-# Enemy Drone Fighter
 
+
+# Enemy Drone Fighter
 class Drone(Enemy):
    
-   '''
-   g_pSprite[DRONE_OBJECT] = new CClippedSprite(4,79,68);
-   '''
+
    
    OBJECT_WIDTH = 79
    OBJECT_HEIGHT = 68
@@ -461,21 +485,20 @@ class Drone(Enemy):
    RIGHT_CANNON =  (OBJECT_WIDTH-9,OBJECT_HEIGHT-17)
    CENTER_CANNON = OBJECT_WIDTH / 2, OBJECT_HEIGHT
    
-   '''
-   //Drone
 
-   result = result && g_pSprite[DRONE_OBJECT]->load(&g_cSpriteImages,0,1,236);
-   '''
    
    SS_COORDINATES = [(1, 236, OBJECT_WIDTH, OBJECT_HEIGHT) ]
+   
+   MAX_HIT_POINTS = 6 
+   BASE_FIRE_RATE = 1000  
   
   
    
    
-   def __init__(self,s_width,s_height):
+   def __init__(self,images,rect_x,rect_y,s_width,s_height):
       
-      super().__init__(s_width,s_height)
-      self.hitPoints = 3
+      super().__init__(images,rect_x,rect_y,s_width,s_height)
+      
       self.damage = 3
       self.fire_rate = 3000
       self.last_fired = 0
@@ -491,7 +514,7 @@ class Drone(Enemy):
       if now - self.last_fired > self.fire_rate: 
    
          shots.append( Shot("EnemyBullet",self.rect.x+self.LEFT_CANNON[0],self.rect.y+self.LEFT_CANNON[1],-2,2))
-         shots.append( Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],0,2))
+         shots.append( Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],0,3))
          shots.append( Shot("EnemyBullet",self.rect.x+self.RIGHT_CANNON[0],self.rect.y+self.RIGHT_CANNON[1],2,2))
          
          self.last_fired = now         
@@ -535,10 +558,10 @@ class Boss(Enemy):
   
    
    
-   def __init__(self,s_width,s_height):
+   def __init__(self,images,rect_x,rect_y,s_width,s_height):
       
-      super().__init__(s_width,s_height)
-      self.hitPoints = 30
+      super().__init__(images,rect_x,rect_y,s_width,s_height)
+      self.hit_points = 30
       self.damage = 100
       self.fire_rate = 1500
       self.last_fired = 0
@@ -580,7 +603,7 @@ class Boss(Enemy):
       
       now = pygame.time.get_ticks()
       
-      # Ram if you can
+      #TODO: Ram if you can
       if False:
          pass
 #      if abs(self.target_x - self.rect.x) <= self.OBJECT_WIDTH:
@@ -617,7 +640,7 @@ class Boss(Enemy):
          
       
       
-      print("Moving (%d,%d)" % (self.vel_x,self.vel_y))
+      #print("Moving (%d,%d)" % (self.vel_x,self.vel_y))
       
       super().move()
 
@@ -636,9 +659,9 @@ class EnemyBlaster(GameObject):
    SS_COORDINATES = [(220, 33, OBJECT_WIDTH, OBJECT_HEIGHT) ]
   
   
-   def __init__(self,s_width,s_height,vel_x=0,vel_y=5):
+   def __init__(self,images,rect_x,rect_y,s_width,s_height,vel_x=0,vel_y=5):
       
-      super().__init__()
+      super().__init__(images,rect_x,rect_y)
       self.damage = 2
       self.vel_x = vel_x
       self.vel_y = vel_y
@@ -668,10 +691,10 @@ class EnemyBullet(GameObject):
    SS_COORDINATES = [(220, 1, OBJECT_WIDTH, OBJECT_HEIGHT) ]
   
    
-   def __init__(self,s_width,s_height,vel_x=0,vel_y=5):
+   def __init__(self,images,rect_x,rect_y,s_width,s_height,vel_x=0,vel_y=5):
       
-      super().__init__()
-      self.damage = 2
+      super().__init__(images,rect_x,rect_y)
+      self.damage = 1
       self.vel_x = vel_x
       self.vel_y = vel_y
       self.max_x = s_width
@@ -698,9 +721,9 @@ class PlayerBlaster(GameObject):
    SS_COORDINATES = [(220, 11, OBJECT_WIDTH, OBJECT_HEIGHT) ]
   
   
-   def __init__(self,vel_x=0,vel_y=5):
+   def __init__(self,images,rect_x,rect_y,vel_x=0,vel_y=5):
       
-      super().__init__()
+      super().__init__(images,rect_x,rect_y)
       self.damage = 2      
       self.vel_x = vel_x
       self.vel_y = vel_y
@@ -725,9 +748,9 @@ class PowerUp(GameObject):
    OBJECT_WIDTH = 57
    OBJECT_HEIGHT = 27
   
-   def __init__(self,s_width,s_height):
+   def __init__(self,images,rect_x,rect_y,s_width,s_height):
       
-      super().__init__()
+      super().__init__(images,rect_x,rect_y)
       
    
    def hit(self,colliding_object):
@@ -749,9 +772,9 @@ class ShieldPU(PowerUp):
     
    SS_COORDINATES = [(231, 1, OBJECT_WIDTH, OBJECT_HEIGHT) ]
      
-   def __init__(self,s_width,s_height):
+   def __init__(self,images,rect_x,rect_y,s_width,s_height):
       
-      super().__init__(s_width,s_height)
+      super().__init__(images,rect_x,rect_y,s_width,s_height)
       
    
    def hit(self,colliding_object):
@@ -773,9 +796,9 @@ class BonusPU(PowerUp):
    
    SS_COORDINATES = [(290, 1, OBJECT_WIDTH, OBJECT_HEIGHT) ] 
    
-   def __init__(self,s_width,s_height):
+   def __init__(self,images,rect_x,rect_y,s_width,s_height):
       
-      super().__init__(s_width,s_height)
+      super().__init__(images,rect_x,rect_y,s_width,s_height)
     
    
    def hit(self,colliding_object):
@@ -800,9 +823,9 @@ class PowerPU(PowerUp):
 
    SS_COORDINATES = [(231, 30, OBJECT_WIDTH, OBJECT_HEIGHT) ]
    
-   def __init__(self,s_width,s_height):
+   def __init__(self,images,rect_x,rect_y,s_width,s_height):
       
-      super().__init__(s_width,s_height)
+      super().__init__(images,rect_x,rect_y,s_width,s_height)
     
    
    def hit(self,colliding_object):
@@ -827,9 +850,9 @@ class XWeaponPU(PowerUp):
    SS_COORDINATES = [(290, 30, OBJECT_WIDTH, OBJECT_HEIGHT) ]
   
  
-   def __init__(self,s_width,s_height):
+   def __init__(self,images,rect_x,rect_y,s_width,s_height):
       
-      super().__init__(s_width,s_height)
+      super().__init__(images,rect_x,rect_y,s_width,s_height)
      
    
    def hit(self,colliding_object):
