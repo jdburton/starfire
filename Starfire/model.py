@@ -34,9 +34,10 @@ class Model():
       self.powerup_objects = pygame.sprite.Group()
       self.explosion_objects = pygame.sprite.Group()
       
-      self.lives = 0
+      self.lives = 3
       self.enemy_rate = 0
       self.last_enemy = 0
+      self.points = 0
       
 
    
@@ -163,7 +164,7 @@ class Model():
          enemy.hit(hit)
          self.checkDeath(enemy)
          
-      # enemy shot vs player: Kill blaster, damage enemy
+      # enemy shot vs player: Kill blaster, damage self
       blaster_hits = pygame.sprite.groupcollide(self.enemy_shot_objects, self.player_objects, True, False )
       for hit in blaster_hits.keys():
          player = blaster_hits[hit][0]
@@ -188,6 +189,7 @@ class Model():
    def checkDeath(self,object):
          # Is the object dead?
          if object.hit_points <= 0 and object.alive():
+            self.points += object.POINT_VALUE
             self.createExplosion(object.rect.x,object.rect.y)
             object.kill()
             return True

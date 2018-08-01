@@ -52,6 +52,7 @@ class GameObject(pygame.sprite.Sprite):
    OBJECT_WIDTH = 0
    OBJECT_HEIGHT = 0
    FRAME_HOLD = 5
+   POINT_VALUE = 0
 
    def __init__(self,images = [],rect_x=0,rect_y=0,s_width=800,s_height=600):
       super().__init__()
@@ -131,6 +132,7 @@ class Player(GameObject):
    MAX_HIT_POINTS = 10  
    BASE_FIRE_RATE = 500
    MIN_FIRE_RATE = 125
+   POINT_VALUE = 0
   
    
    def __init__(self,images,rect_x,rect_y,s_width,s_height):
@@ -161,9 +163,9 @@ class Player(GameObject):
       # Level 3: Rapid (2x) fire
       # Level 4: Turbo (4x) fire
 
-      self.fire_level = 2
+      self.fire_level = 0
       self.active_cannons = (True,True,True)
-      self.fire_rate = self.BASE_FIRE_RATE
+      self.fire_rate = self.BASE_FIRE_RATE/4
       self.last_fired = 0
      
       # Constrain to the screen.
@@ -191,11 +193,26 @@ class Player(GameObject):
       return shots
        
    
+   def powerUp(self):
+     
+      if self.fire_level > 4:
+         return
+      
+      
+      self.fire_level += 1
+      if self.fire_level == 1:
+         self.active_cannons = (True,False,True) 
+      else:
+         self.active_cannons = (True,True,True)
+         if self.fire_level >= 3:
+            self.fire_rate /= 2
+ 
+   
    def reset(self):
       
       self.hit_points = self.MAX_HIT_POINTS
-      self.fire_rate = self.BASE_FIRE_RATE
-      self.fire_level = 2
+      self.fire_rate = self.BASE_FIRE_RATE/4
+      self.fire_level = 0
       self.rect.x = self.start_x
       self.rect.y = self.start_y
       self.time_created = pygame.time.get_ticks()
@@ -348,6 +365,7 @@ class Gunship(Enemy):
    
    OBJECT_WIDTH = 73
    OBJECT_HEIGHT = 58
+   POINT_VALUE = 800
    
    LEFT_CANNON = (5, OBJECT_HEIGHT-10)
    RIGHT_CANNON =  (OBJECT_WIDTH-13,OBJECT_HEIGHT-10)
@@ -359,7 +377,7 @@ class Gunship(Enemy):
                      (150,75, OBJECT_WIDTH, OBJECT_HEIGHT),
                      (226,75, OBJECT_WIDTH, OBJECT_HEIGHT) ]
    
-   MAX_HIT_POINTS = 7  
+   MAX_HIT_POINTS = 8  
    BASE_FIRE_RATE = 1500
 
   
@@ -419,6 +437,7 @@ class Dart(Enemy):
    OBJECT_WIDTH = 71
    OBJECT_HEIGHT = 68
    CANNON = OBJECT_WIDTH / 2, OBJECT_HEIGHT
+   POINT_VALUE = 400
    
 
    SS_COORDINATES = [(1, 306, OBJECT_WIDTH, OBJECT_HEIGHT),
@@ -479,6 +498,7 @@ class Drone(Enemy):
    
    OBJECT_WIDTH = 79
    OBJECT_HEIGHT = 68
+   POINT_VALUE = 200
    
    
    LEFT_CANNON = (1, OBJECT_HEIGHT-17)
@@ -546,6 +566,7 @@ class Boss(Enemy):
    LEFT_CANNON = (48, OBJECT_HEIGHT-10)
    RIGHT_CANNON =  (OBJECT_WIDTH-60,OBJECT_HEIGHT-10)
    CENTER_CANNON = (OBJECT_WIDTH / 2, OBJECT_HEIGHT-35)
+   POINT_VALUE = 1600
    
    
    '''

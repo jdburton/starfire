@@ -28,8 +28,10 @@ class SoundManager():
    
    def playActiveSounds(self,active_sounds = {}):
       for sound in active_sounds.keys():
-         if active_sounds[sound]:  
-            self.sounds[sound].play()
+         if active_sounds[sound]:
+            # Keep a single sound (usually the player blaster) from overwhelming the system.
+            if self.sounds[sound].get_num_channels() < 3:
+               self.sounds[sound].play()
             active_sounds[sound] = False
     
 
@@ -44,8 +46,7 @@ class SoundManager():
       q_channel = pygame.mixer.find_channel()
       
       for sound in sound_q:
-         q_channel.queue(self.sounds[sound])
-         
+         q_channel.queue(self.sounds[sound])      
       
       self.q_channels.append(q_channel)
       
