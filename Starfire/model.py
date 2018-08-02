@@ -43,7 +43,7 @@ class Model():
       self.lives = 5
       self.enemy_rate = 0
       self.last_enemy = 0
-      self.last_pu = 5000
+      self.last_pu = 0
       self.pu_rate = 10000
       self.points = 0      
       self.player_objects.empty()
@@ -126,7 +126,7 @@ class Model():
       self.powerup_objects.add(pu)  
       
       self.last_pu = now
-      self.pu_rate = random.randint(1000,4000)    
+      self.pu_rate = random.randint(10000,40000)    
    
    def animate(self):
       self.playerOne.animate()
@@ -188,12 +188,7 @@ class Model():
       
    def collisionDetection(self):
       hp = -1 
-      # enemy vs enemy = Bounce
-      collided_enemies = pygame.sprite.groupcollide(self.enemy_objects, self.enemy_objects, False, False)
-      for enemy in collided_enemies:
-         if len(collided_enemies[enemy]) > 1: 
-            enemy.bounce()
-
+      kill_em_all = False
 
 
       
@@ -204,11 +199,20 @@ class Model():
          enemy.hit(hit)
          self.checkDeath(enemy)
       
-      powerup_hits = pygame.sprite.groupcollide(self.powerup_objects,self.player_objects, True, False)
+      powerup_hits = pygame.sprite.groupcollide(self.powerup_objects,self.player_objects, False, False)
       for powerup in powerup_hits:
          powerup.hit(self.playerOne)
          self.playerOne.hit(powerup)
-   
+         if type(powerup) is gameobjects.XWeaponPU:
+            kill_em_all = True
+         self.checkDeath(powerup)
+      
+      
+      if kill_em_all:
+         for enemy in self.enemy_objects.sprites():
+            enemy.hit_points = -1
+            self.checkDeath(enemy)
+         
       
       now = pygame.time.get_ticks()
       # 1000 tick grace period. 
@@ -228,6 +232,7 @@ class Model():
       
       if self.checkDeath(self.playerOne):
          self.sound_state['Dying'] = True
+         
       elif hp == 1 and self.playerOne.warned == 0:
          if random.randint(0,1):
             
@@ -244,9 +249,10 @@ class Model():
    
    def checkDeath(self,object):
          # Is the object dead?
-         if object.hit_points <= 0 and object.alive():
+         if object.hit_points < 0 and object.alive():
             self.points += object.POINT_VALUE
-            self.createExplosion(object.rect.x,object.rect.y)
+            if object.explodes():
+               self.createExplosion(object.rect.x,object.rect.y)
             object.kill()
             return True
          return False

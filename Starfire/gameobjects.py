@@ -113,6 +113,9 @@ class GameObject(pygame.sprite.Sprite):
       self.hit_points -= colliding_object.damage
       return self.hit_points
    
+   # Does this object explode? No, unless explicitly placed in subclass.
+   def explodes(self):
+      return False
 
 # Class for Player Sprite
 class Player(GameObject):
@@ -252,6 +255,9 @@ class Player(GameObject):
       elif self.rect.y < 0:
          self.rect.y = 0
          self.vel_y = 0
+   
+   def explodes(self):
+      return True
       
 
 # Class for the explosion   
@@ -360,7 +366,8 @@ class Enemy(GameObject):
    def bounce(self):
       return
 
-
+   def explodes(self):
+      return True
 
 # Enemy Gunship
 class Gunship(Enemy):
@@ -401,10 +408,10 @@ class Gunship(Enemy):
    def fireWeapon(self):
       
       
-      x_dir  = self.target_x-self.rect.x+self.CENTER_CANNON[0]
-      y_dir = self.target_y-self.rect.y+self.CENTER_CANNON[1]
+      #x_dir  = self.target_x-self.rect.x+self.CENTER_CANNON[0]
+      #y_dir = self.target_y-self.rect.y+self.CENTER_CANNON[1]
 
-      (x_vel,y_vel) = self.aim(x_dir,y_dir,3)
+      #(x_vel,y_vel) = self.aim(x_dir,y_dir,3)
       
       #print("Gunship: Aiming from (%d,%d) to (%d, %d) at (%d,%d)" % (self.rect.x+self.CENTER_CANNON[0],self.target_y-self.rect.y+self.CENTER_CANNON[1],self.target_x,self.target_y,x_vel,y_vel) )
    
@@ -415,7 +422,7 @@ class Gunship(Enemy):
       if now - self.last_fired > self.fire_rate: 
    
          shots.append(Shot("EnemyBlaster",self.rect.x+self.LEFT_CANNON[0],self.rect.y+self.LEFT_CANNON[1],0,5))
-         shots.append(Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],x_vel,y_vel))
+         #shots.append(Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],x_vel,y_vel))
          shots.append(Shot("EnemyBlaster",self.rect.x+self.RIGHT_CANNON[0],self.rect.y+self.RIGHT_CANNON[1],0,5))
 
          self.last_fired = now         
@@ -778,11 +785,10 @@ class PowerUp(GameObject):
       self.vel_x = 0
       self.vel_y = 2
       self.damage = 0
-      self.hit_points = 0
+      self.hit_points = -1
       
    
-   def hit(self,colliding_object):
-      pass
+
 
 # Refill shields 
 class ShieldPU(PowerUp):
@@ -807,8 +813,7 @@ class ShieldPU(PowerUp):
       self.damage = -9
       
    
-   def hit(self,colliding_object):
-      pass
+
 
 # Bonus points     
 class BonusPU(PowerUp):
@@ -832,8 +837,7 @@ class BonusPU(PowerUp):
       super().__init__(images,rect_x,rect_y,s_width,s_height)
     
    
-   def hit(self,colliding_object):
-      pass
+
  
 
 # Extra blasters
@@ -863,6 +867,7 @@ class PowerPU(PowerUp):
    def hit(self,colliding_object):
       if type(colliding_object) is Player:
          colliding_object.powerUp()
+      super().hit(colliding_object)
       
 
 
@@ -889,5 +894,4 @@ class XWeaponPU(PowerUp):
       super().__init__(images,rect_x,rect_y,s_width,s_height)
      
    
-   def hit(self,colliding_object):
-      pass
+   
