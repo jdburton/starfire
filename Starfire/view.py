@@ -7,6 +7,9 @@ import Starfire.utils.background as background
 import random
 
 BG_FILE='images/starfield800.bmp'
+LOGO_FILE='images/logo.bmp'
+TITLE_FILE='images/title.bmp'
+GAMEOVER_FILE='images/game_over.bmp'
 FONT_SIZE = 26
 FONT_FILE = 'fonts/stonehen.ttf'
 FONT_COLOR = (254,249,215)
@@ -17,6 +20,24 @@ class View:
       
       pygame.display.set_caption('Starfire')
       self.screen = pygame.display.set_mode((screen_width, screen_height))
+      
+   def displayLogo(self):
+      self.background = background.StaticBackground(LOGO_FILE)
+      self.drawBackground()
+      pygame.display.flip()
+   
+   def displayTitle(self):
+      self.background = background.StaticBackground(TITLE_FILE)
+      self.drawBackground()
+      pygame.display.flip()
+
+   def displayGameOver(self):
+      self.background = background.StaticBackground(GAMEOVER_FILE)
+      self.drawBackground()
+      pygame.display.update()
+
+   
+   def initGame(self):
       self.background = background.DownScrollingBackground(BG_FILE)
       self.initText()
    
@@ -31,7 +52,6 @@ class View:
    def drawBackground(self):
       
       for bgimage in self.background.images:
-         pass
          self.screen.blit(bgimage.image,(bgimage.x_coord,bgimage.y_coord))
    
    def postProcessing(self):
