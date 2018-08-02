@@ -34,17 +34,25 @@ class Model():
       self.powerup_objects = pygame.sprite.Group()
       self.explosion_objects = pygame.sprite.Group()
       
-      self.lives = 3
-      self.enemy_rate = 0
-      self.last_enemy = 0
-      self.points = 0
+
       
 
    
    def initGame(self):
-      
+
+      self.lives = 0
+      self.enemy_rate = 0
+      self.last_enemy = 0
+      self.points = 0      
+      self.player_objects.empty()
+      self.enemy_objects.empty()
+      self.enemy_shot_objects.empty()
+      self.shot_objects.empty()
+      self.powerup_objects.empty()
+      self.explosion_objects.empty()
       self.createPlayerOne()
       
+
       
    
    def createPlayerOne(self):   
@@ -132,9 +140,10 @@ class Model():
          if cannon is not None:
             blast = gameobjects.PlayerBlaster(self.sprite_images["PlayerBlaster"],cannon.x_pos,cannon.y_pos,cannon.x_vel,cannon.y_vel)
             self.shot_objects.add(blast)
+         self.sound_state['Blaster'] = True
+      
       
       # Restrict blaster fire to three sound channels.
-      self.sound_state['Blaster'] = True
       
       #for id in range(0,2):
       #   channel = pygame.mixer.Channel(id)
@@ -150,12 +159,7 @@ class Model():
             enemy.bounce()
 
 
-      # Player vs enemy = damage to both            
-      player_hits = pygame.sprite.groupcollide(self.enemy_objects, self.player_objects, False, False)
-      for enemy in player_hits:
-         enemy.hit(self.playerOne)
-         self.playerOne.hit(enemy)
-         self.checkDeath(enemy)
+
       
       # Blaster vs enemy: Kill blaster, damage enemy
       blaster_hits = pygame.sprite.groupcollide(self.shot_objects, self.enemy_objects, True, False )
@@ -163,12 +167,23 @@ class Model():
          enemy = blaster_hits[hit][0]
          enemy.hit(hit)
          self.checkDeath(enemy)
+      
+      
+      now = pygame.time.get_ticks()
+      # 1000 tick grace period. 
+      if now - self.playerOne.time_created > 1000:  
+         # Player vs enemy = damage to both         
+         player_hits = pygame.sprite.groupcollide(self.enemy_objects, self.player_objects, False, False)
+         for enemy in player_hits:
+            enemy.hit(self.playerOne)
+            self.playerOne.hit(enemy)
+            self.checkDeath(enemy)
          
-      # enemy shot vs player: Kill blaster, damage self
-      blaster_hits = pygame.sprite.groupcollide(self.enemy_shot_objects, self.player_objects, True, False )
-      for hit in blaster_hits.keys():
-         player = blaster_hits[hit][0]
-         hp = player.hit(hit)
+         # enemy shot vs player: Kill blaster, damage self
+         blaster_hits = pygame.sprite.groupcollide(self.enemy_shot_objects, self.player_objects, True, False )
+         for hit in blaster_hits.keys():
+            player = blaster_hits[hit][0]
+            hp = player.hit(hit)
       
       if self.checkDeath(self.playerOne):
          self.sound_state['Dying'] = True
@@ -208,6 +223,7 @@ class Model():
             self.lives -= 1
             print("lives remaining %d" % self.lives)
             self.playerOne.reset();
+            self.sound_state['NewShip1'] = True
             self.player_objects.add(self.playerOne)
             
          else:

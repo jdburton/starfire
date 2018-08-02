@@ -11,7 +11,7 @@ import time
 
 SCREEN_WIDTH=800
 SCREEN_HEIGHT=600
-
+GAME_OVER = 1
 
 class Controller():
    
@@ -57,7 +57,7 @@ class Controller():
    
    
    
-   def processInput(self):
+   def processGameInput(self):
       move_x = 0
       move_y = 0
       MOVE_SIZE = 4
@@ -136,7 +136,7 @@ class Controller():
       self.V.drawState(self.M.lives,self.M.playerOne.hit_points,self.M.points)
       
    def moveObjects(self):
-      self.processInput()
+      self.processGameInput()
       self.M.moveObjects()
       self.M.animate()
       self.M.collisionDetection()
@@ -168,19 +168,88 @@ class Controller():
       pygame.mouse.set_visible(True)
       pygame.event.set_grab(False)
       return pygame.mouse.get_pos()
+   
+   
+   def displayLogo(self):
+      
+      self.V.displayLogo()
+      self.sound_manager.playConcurrentSounds(["Splash1","Splash2"])
+
+      start = pygame.time.set_timer(pygame.TIMER_RESOLUTION, 5000)
+      while True:
+         for event in pygame.event.get():
+            if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
+               sys.exit()
+            elif event.type == pygame.TIMER_RESOLUTION or (event.type == KEYUP and event.key == K_RETURN):
+               #self.sound_manager.stopSounds(["Splash1","Splash2"])
+               self.sound_manager.stopConcurrentSounds()
+
+               return
+            
+         self.clock.tick(60)
+   
+   
+   def displayTitle(self):
+      
+      self.V.displayTitle()
+      while True:
+         for event in pygame.event.get():
+            if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
+               sys.exit()
+            elif (event.type == KEYUP):
+               if (event.key == K_RETURN):
+                  return
+            
+         self.clock.tick(60)
 
    def mainLoop(self):
+      self.displayLogo()
+      self.displayTitle()
+  
       self.grabMouse(SCREEN_WIDTH/2,SCREEN_HEIGHT-100)
-      self.gameLoop()
+      while self.gameLoop():
+         pass
+      sys.exit()
+      
+   def gameOver(self):
+      self.stopMusic()
+      #self.sound_manager.stopConcurrentSounds()
+      
+      start = pygame.time.set_timer(pygame.TIMER_RESOLUTION, 2000)
+      wait = True
+      while wait:
+         for event in pygame.event.get():
+            if event.type == pygame.TIMER_RESOLUTION:
+               wait = False
+               break
+            
+         self.clock.tick(60)
+      
+      self.V.displayGameOver()
+      
+      self.sound_manager.playQueuedSounds(sound_q = ["Gameover2","Gameover1"])
+
+      start = pygame.time.set_timer(pygame.TIMER_RESOLUTION, 8000)
+      
+      while True:
+         for event in pygame.event.get():
+            if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
+               sys.exit()
+            elif event.type == pygame.TIMER_RESOLUTION or (event.type == KEYUP and event.key == K_RETURN):
+               return True
+
+            
+         self.clock.tick(60)
 
    def gameLoop(self):
       self.M.initGame()
-      
+      self.V.initGame()
       self.playTheme()
+      self.sound_manager.playQueuedSounds(["Start"])
       #self.playIntro()
       
       die = 0
-      play_gameover = 0
+
       while True:
          
          self.V.drawBackground()
@@ -190,21 +259,9 @@ class Controller():
          self.V.updateDisplay()
          self.sound_manager.playActiveSounds(self.M.sound_state)
          self.V.postProcessing()
-         if self.M.checkGameOver() and die == 0:
-            print("Died!")
-            die = pygame.time.get_ticks()
-            self.stopMusic()
-            
-            
-         if die > 0:
-            now = pygame.time.get_ticks()
-            if now - die > 2000 and self.sound_manager.checkQueueChannels() == 0:
-               if play_gameover == 0:
-                  self.sound_manager.playQueuedSounds(sound_q = ["Gameover2","Gameover1"])
-                  play_gameover = 1
-               else:
-                  sys.exit()
-            
+         if self.M.checkGameOver():
+
+            return self.gameOver()
     
          self.clock.tick(60)
    

@@ -224,8 +224,8 @@ class Player(GameObject):
       now = pygame.time.get_ticks()
       # Five second delay for damage
       #print ("now: %d created %d age %d" % (now, self.time_created, now - self.time_created))
-      if now - self.time_created > 5000:
-         super().hit(colliding_object)
+  
+      super().hit(colliding_object)
       if colliding_object.damage == 0:
          return -1
       else:

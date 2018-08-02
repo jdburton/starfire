@@ -60,8 +60,8 @@ class StaticBackground(Background):
       
       # load the file once
       image =  pygame.image.load(filename) 
-      self.images = [ image ]
-      self.image_coordinates = [ 0 ]
+      self.images = [ Background.BgImage(image, 0,0) ]
+
    
    # scroll does nothing. 
       
