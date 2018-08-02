@@ -133,6 +133,8 @@ class Controller():
       self.M.explosion_objects.draw(self.V.screen)
       self.M.shot_objects.draw(self.V.screen)
       self.M.enemy_shot_objects.draw(self.V.screen)
+      self.M.powerup_objects.draw(self.V.screen)
+      
       self.V.drawState(self.M.lives,self.M.playerOne.hit_points,self.M.points)
       
    def moveObjects(self):
@@ -201,14 +203,47 @@ class Controller():
                   return
             
          self.clock.tick(60)
+         
+   def displayHelp(self):
+      
+      # Help index is the current help panel, starting at 1. 0 if no more.
+      help_idx = self.V.displayHelp()
+      while help_idx:
+         for event in pygame.event.get():
+            if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
+               sys.exit()
+            elif (event.type == KEYUP):
+               if (event.key == K_RETURN):
+                  help_idx = self.V.displayHelp()
+            
+         self.clock.tick(60)
+   
+   def mainMenu(self):
+      
+      self.V.displayMenu()
+      while True:
+         
+         for event in pygame.event.get():
+            if event.type == QUIT: 
+               sys.exit()
+            elif (event.type == KEYUP):
+               if (event.key == K_ESCAPE or  event.key == K_q):
+                  sys.exit()
+               elif (event.key == K_RETURN or event.key == K_n):
+                  self.gameLoop()
+                  self.V.displayMenu()
+               elif (event.key == K_h):
+                  self.displayHelp()   
+                  self.V.displayMenu()
+            
+         self.clock.tick(60)
 
    def mainLoop(self):
       self.displayLogo()
       self.displayTitle()
   
       self.grabMouse(SCREEN_WIDTH/2,SCREEN_HEIGHT-100)
-      while self.gameLoop():
-         pass
+      self.mainMenu()
       sys.exit()
       
    def gameOver(self):
@@ -240,6 +275,8 @@ class Controller():
 
             
          self.clock.tick(60)
+   
+   
 
    def gameLoop(self):
       self.M.initGame()
@@ -254,6 +291,7 @@ class Controller():
          
          self.V.drawBackground()
          self.M.createEnemies()
+         self.M.createPowerUps()
          self.moveObjects()
          self.drawObjects()
          self.V.updateDisplay()

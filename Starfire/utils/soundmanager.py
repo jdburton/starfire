@@ -11,19 +11,23 @@ class SoundManager():
    
    def loadSounds(self):
       
+      self.sounds['Blaster'] = pygame.mixer.Sound('sounds/blaster.wav')
       self.sounds['Splash1'] = pygame.mixer.Sound('sounds/Monkey.wav')
       self.sounds['Splash2'] = pygame.mixer.Sound('sounds/typewriter.wav')
-      self.sounds['Blaster'] = pygame.mixer.Sound('sounds/blaster.wav')
       self.sounds['EnemyBlaster'] = pygame.mixer.Sound('sounds/laser.wav')
       self.sounds['Gameover1'] = pygame.mixer.Sound('sounds/gameover1.wav')
       self.sounds['Gameover2'] = pygame.mixer.Sound('sounds/gameover.wav')
-      self.sounds['Explosion'] = pygame.mixer.Sound('sounds/EXPLOSION.WAV')
+      
       self.sounds['Warn1'] = pygame.mixer.Sound('sounds/killed0.wav')
       self.sounds['Warn2'] = pygame.mixer.Sound('sounds/killed2.wav')
       self.sounds['Begin'] = pygame.mixer.Sound('sounds/begin2.wav')
       self.sounds['Dying'] = pygame.mixer.Sound('sounds/dying.wav')
       self.sounds['Hit'] = pygame.mixer.Sound('sounds/HITSHIELD.WAV')
-      
+      self.sounds['Gameover0'] = pygame.mixer.Sound('sounds/killed1.wav')
+      self.sounds['Start'] = pygame.mixer.Sound('sounds/begin2.wav')
+      self.sounds['NewShip1'] = pygame.mixer.Sound('sounds/begin0.wav')
+      self.sounds['NewShip2'] = pygame.mixer.Sound('sounds/begin1.wav')
+      self.sounds['Explosion'] = pygame.mixer.Sound('sounds/EXPLOSION.WAV')
 
    
    def playActiveSounds(self,active_sounds = {}):
@@ -56,4 +60,15 @@ class SoundManager():
             self.q_channels.remove(channel) 
       
       return len(self.q_channels)
+   
+   def playConcurrentSounds(self,sounds = []):
+      
+      for sound in sounds:
+         self.sounds[sound].play()
+         
+   def stopConcurrentSounds(self,sounds = None):
+      if sounds is None:
+         sounds = self.sounds.keys()
+      for sound in sounds:
+         self.sounds[sound].stop()
          

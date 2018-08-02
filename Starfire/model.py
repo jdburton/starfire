@@ -40,9 +40,11 @@ class Model():
    
    def initGame(self):
 
-      self.lives = 0
+      self.lives = 5
       self.enemy_rate = 0
       self.last_enemy = 0
+      self.last_pu = 5000
+      self.pu_rate = 10000
       self.points = 0      
       self.player_objects.empty()
       self.enemy_objects.empty()
@@ -93,6 +95,38 @@ class Model():
       self.last_enemy = now
       self.enemy_rate = random.randint(1000,5000)       
 
+
+   def createPowerUps(self): 
+      
+      pu_types = [ 'BonusPU', 'PowerPU', 'ShieldPU','XWeaponPU' ]
+
+      
+      now = pygame.time.get_ticks()
+      
+      if now - self.last_pu < self.pu_rate:  
+         return
+      
+      
+      type_idx = int(random.randint(0,9) / 3) ;
+   
+      type = pu_types[type_idx]
+
+      
+      pos_x = random.randint(50,self.screen_width - 50)
+      
+      if type == "BonusPU":
+         pu = gameobjects.BonusPU(self.sprite_images[type],pos_x,0,self.screen_width,self.screen_height)
+      elif type == "PowerPU":
+         pu = gameobjects.PowerPU(self.sprite_images[type],pos_x,0,self.screen_width,self.screen_height)
+      elif type == "ShieldPU":
+         pu = gameobjects.ShieldPU(self.sprite_images[type],pos_x,0,self.screen_width,self.screen_height)
+      elif type == "XWeaponPU":
+         pu = gameobjects.XWeaponPU(self.sprite_images[type],pos_x,0,self.screen_width,self.screen_height)
+      
+      self.powerup_objects.add(pu)  
+      
+      self.last_pu = now
+      self.pu_rate = random.randint(1000,4000)    
    
    def animate(self):
       self.playerOne.animate()
@@ -116,6 +150,8 @@ class Model():
       for sprite in self.shot_objects:
          sprite.move()
       for sprite in self.enemy_shot_objects:
+         sprite.move()
+      for sprite in self.powerup_objects:
          sprite.move()
 
    def fireEnemyWeapons(self,enemy):
@@ -168,6 +204,11 @@ class Model():
          enemy.hit(hit)
          self.checkDeath(enemy)
       
+      powerup_hits = pygame.sprite.groupcollide(self.powerup_objects,self.player_objects, True, False)
+      for powerup in powerup_hits:
+         powerup.hit(self.playerOne)
+         self.playerOne.hit(powerup)
+   
       
       now = pygame.time.get_ticks()
       # 1000 tick grace period. 

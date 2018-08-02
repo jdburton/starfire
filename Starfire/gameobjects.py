@@ -164,7 +164,7 @@ class Player(GameObject):
       # Level 4: Turbo (4x) fire
 
       self.fire_level = 0
-      self.active_cannons = (True,True,True)
+      self.active_cannons = (False,True,False)
       self.fire_rate = self.BASE_FIRE_RATE
       self.last_fired = 0
      
@@ -195,7 +195,7 @@ class Player(GameObject):
    
    def powerUp(self):
      
-      if self.fire_level > 4:
+      if self.fire_level >= 4:
          return
       
       
@@ -206,6 +206,8 @@ class Player(GameObject):
          self.active_cannons = (True,True,True)
          if self.fire_level >= 3:
             self.fire_rate /= 2
+      
+      print("Fire level=%d, Fire rate=%d" % (self.fire_level,self.fire_rate))
  
    
    def reset(self):
@@ -215,6 +217,7 @@ class Player(GameObject):
       self.fire_level = 0
       self.rect.x = self.start_x
       self.rect.y = self.start_y
+      self.active_cannons = (False,True,False)
       self.time_created = pygame.time.get_ticks()
       pygame.mouse.set_pos([self.start_x,self.start_y])
       self.warned = 0
@@ -771,7 +774,11 @@ class PowerUp(GameObject):
   
    def __init__(self,images,rect_x,rect_y,s_width,s_height):
       
-      super().__init__(images,rect_x,rect_y)
+      super().__init__(images,rect_x,rect_y,s_width,s_height)
+      self.vel_x = 0
+      self.vel_y = 2
+      self.damage = 0
+      self.hit_points = 0
       
    
    def hit(self,colliding_object):
@@ -787,6 +794,7 @@ class ShieldPU(PowerUp):
    OBJECT_WIDTH = 57
    OBJECT_HEIGHT = 27
    
+   
    '''
    result = result && g_pSprite[SHIELD_OBJECT]->load(&g_cSpriteImages,0,231,1);
    '''
@@ -796,6 +804,7 @@ class ShieldPU(PowerUp):
    def __init__(self,images,rect_x,rect_y,s_width,s_height):
       
       super().__init__(images,rect_x,rect_y,s_width,s_height)
+      self.damage = -9
       
    
    def hit(self,colliding_object):
@@ -810,6 +819,7 @@ class BonusPU(PowerUp):
    
    OBJECT_WIDTH = 57
    OBJECT_HEIGHT = 27
+   POINT_VALUE = 2000
    
    '''
    result = result && g_pSprite[BONUS_OBJECT]->load(&g_cSpriteImages,0,290,1);
@@ -847,10 +857,13 @@ class PowerPU(PowerUp):
    def __init__(self,images,rect_x,rect_y,s_width,s_height):
       
       super().__init__(images,rect_x,rect_y,s_width,s_height)
+
     
    
    def hit(self,colliding_object):
-      pass
+      if type(colliding_object) is Player:
+         colliding_object.powerUp()
+      
 
 
 

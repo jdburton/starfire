@@ -10,9 +10,11 @@ BG_FILE='images/starfield800.bmp'
 LOGO_FILE='images/logo.bmp'
 TITLE_FILE='images/title.bmp'
 GAMEOVER_FILE='images/game_over.bmp'
+MENU_FILE='images/menu.bmp'
 FONT_SIZE = 26
 FONT_FILE = 'fonts/stonehen.ttf'
 FONT_COLOR = (254,249,215)
+HELP_FILES =[ 'images/help.bmp', 'images/enemies.bmp' ]
 
 class View:
 
@@ -20,14 +22,32 @@ class View:
       
       pygame.display.set_caption('Starfire')
       self.screen = pygame.display.set_mode((screen_width, screen_height))
+      self.help_index = 0
       
    def displayLogo(self):
       self.background = background.StaticBackground(LOGO_FILE)
       self.drawBackground()
       pygame.display.flip()
    
+   def displayHelp(self):
+      
+      if self.help_index < len(HELP_FILES):
+         self.background = background.StaticBackground(HELP_FILES[self.help_index])
+         self.drawBackground()
+         pygame.display.flip()
+         self.help_index = ( self.help_index + 1 )         
+      else:
+         self.help_index = 0
+         
+      return self.help_index
+   
    def displayTitle(self):
       self.background = background.StaticBackground(TITLE_FILE)
+      self.drawBackground()
+      pygame.display.flip()
+   
+   def displayMenu(self):
+      self.background = background.StaticBackground(MENU_FILE)
       self.drawBackground()
       pygame.display.flip()
 
