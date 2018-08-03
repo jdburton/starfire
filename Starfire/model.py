@@ -262,8 +262,13 @@ class Model():
       if kill_em_all:
          for enemy in self.enemy_objects.sprites():
             # Weapon X does not kill bosses, but does 20 points of damage.
+            # Play the exposion sound, even if it did not kill the boss.
             enemy.hit_points -= 20
             self.checkDeath(enemy)
+            self.sound_state['Explosion'] = True
+               
+               
+               
          
       
       now = pygame.time.get_ticks()

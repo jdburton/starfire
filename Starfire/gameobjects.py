@@ -11,7 +11,7 @@ CK=(255,0,255)
 
 MAX_FPS = 60
 FRAME_HOLD = int ( MAX_FPS / 10 )
-MOVE_SCALE = (1.25 * MAX_FPS * 0.001) 
+MOVE_SCALE = (1.0 * MAX_FPS * 0.001) 
 
 # Utility to load images from the sprite sheet.
 # returns a dictionary of images.
