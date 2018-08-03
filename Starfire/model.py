@@ -67,7 +67,7 @@ class Model():
       self.lives = INIT_LIVES
       self.level = INIT_LEVEL
       self.enemy_rate = 1000
-      self.boss_interval = 40000
+      self.boss_interval = 60000
       self.last_enemy = pygame.time.get_ticks()
       self.last_pu = pygame.time.get_ticks()
       self.last_boss = pygame.time.get_ticks()
@@ -359,20 +359,22 @@ class Model():
       self.points += object.POINT_VALUE
       # Bosses have big explosions and reset boss mode
       if type(object) is gameobjects.Boss:
+         # Reset boss information.
+         self.last_boss = pygame.time.get_ticks()
+         self.last_enemy = self.last_boss
+         self.level += 1
+   
+      if object.explodes() == gameobjects.BIG_EXPLOSION:
          # TODO: Make one big explosion instead of five little ones.
          self.createExplosion(object.rect.x,object.rect.y)
          self.createExplosion(object.rect.x+object.OBJECT_WIDTH,object.rect.y)
          self.createExplosion(object.rect.x,object.rect.y+object.OBJECT_HEIGHT)
          self.createExplosion(object.rect.x+object.OBJECT_WIDTH,object.rect.y+object.OBJECT_HEIGHT)
          self.createExplosion(object.rect.x+object.OBJECT_WIDTH/2,object.rect.y+object.OBJECT_HEIGHT/2)
-         
-         # Reset boss information.
-         self.last_boss = pygame.time.get_ticks()
-         self.last_enemy = self.last_boss
-         self.level += 1
-      # If the object explodes, blow it up!
-      elif object.explodes():
+         # If the object explodes, blow it up!
+      elif object.explodes() != gameobjects.NO_EXPLOSION:
          self.createExplosion(object.rect.x,object.rect.y)
+         
       object.kill()
       return True
  

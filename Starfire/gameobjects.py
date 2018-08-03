@@ -122,10 +122,10 @@ class GameObject(pygame.sprite.Sprite):
       
   
    # There is probably a better way to do this, but it works well enough.
-   def animate(self):
+   def animate(self,hold=FRAME_HOLD):
       
       self.object_frame += 1 
-      self.image = self.object_images[int(self.object_frame/FRAME_HOLD) % len(self.object_images) ]
+      self.image = self.object_images[int(self.object_frame/hold) % len(self.object_images) ]
   
    # Accelerate the object
    def accelerate(self,x=0,y=0):
@@ -299,7 +299,7 @@ class Player(GameObject):
          self.vel_y = 0
    
    def explodes(self):
-      return True
+      return SMALL_EXPLOSION
       
 
 # Class for the explosion   
@@ -323,9 +323,9 @@ class Explosion(GameObject):
       super().__init__(images,rect_x,rect_y)
    
    def animate(self):
-      super().animate()
+      super().animate(hold = FRAME_HOLD/2)
       # If we've been through one cycle, kill the explosion.
-      if self.object_frame/FRAME_HOLD >= len(self.object_images):
+      if self.object_frame/(FRAME_HOLD/2) >= len(self.object_images):
          self.kill()
          self.object_frame = 0
       
@@ -892,7 +892,8 @@ class Boss(Enemy):
          self.rect.y = 0
          self.vel_y = self.MAX_VELOCITY_Y
          
-         
+   def explodes(self):
+      return BIG_EXPLOSION      
 
 
 # Enemy Blaster. We know it's bad because it's red.
