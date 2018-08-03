@@ -138,14 +138,15 @@ class Controller():
       self.M.movePlayer(move_x,move_y)
             
    # draw the objects from the model to the screen.
+   # Last object drawn is on top
    def drawObjects(self):
 
+      self.M.explosion_objects.draw(self.V.screen) 
       self.M.shot_objects.draw(self.V.screen)
       self.M.enemy_shot_objects.draw(self.V.screen)
       self.M.powerup_objects.draw(self.V.screen)    
-      self.M.player_objects.draw(self.V.screen)
       self.M.enemy_objects.draw(self.V.screen)
-      self.M.explosion_objects.draw(self.V.screen)  
+      self.M.player_objects.draw(self.V.screen)
       self.V.drawState(self.M.level,self.M.lives,self.M.playerOne.hit_points,self.M.points)
    
    # Process input, move, anmiate, and detect collisions   

@@ -99,6 +99,10 @@ class GameObject(pygame.sprite.Sprite):
       self.hit_points = 1
       self.damage = 0
       
+      # Can't think of a case where a constrained object has a min that isn't zero.
+      self.min_x = 0
+      self.min_y = 0
+      
       self.setImages(images, rect_x, rect_y)
       self.last_move = pygame.time.get_ticks()
    
@@ -283,14 +287,14 @@ class Player(GameObject):
       if self.rect.x > self.max_x:
          self.rect.x = self.max_x
          self.vel_x = 0
-      elif self.rect.x < 0:
-         self.rect.x = 0
+      elif self.rect.x < self.min_x:
+         self.rect.x = self.min_x
          self.vel_x = 0
          
       if self.rect.y > self.max_y:
          self.rect.y = self.max_y
          self.vel_y = 0
-      elif self.rect.y < 0:
+      elif self.rect.y < self.min_y:
          self.rect.y = 0
          self.vel_y = 0
    
@@ -500,8 +504,8 @@ class Gunship(Enemy):
          self.rect.x = self.max_x
          self.vel_x = self.MIN_VELOCITY_X
          
-      elif self.rect.x < 0:
-         self.rect.x = 0
+      elif self.rect.x < self.min_x:
+         self.rect.x = self.min_x
          self.vel_x = self.MAX_VELOCITY_X
          
          
@@ -513,8 +517,8 @@ class Gunship(Enemy):
          self.move_interval = 2000
          
          
-      elif self.rect.y < 0:
-         self.rect.y = 0
+      elif self.rect.y < self.min_y:
+         self.rect.y = self.min_y
          self.vel_y = self.MAX_VELOCITY_Y
          
 
@@ -718,8 +722,8 @@ class Drone(Enemy):
          self.vel_x = self.MIN_VELOCITY_X
          self.move_interval = 1000
          
-      elif self.rect.x < 0:
-         self.rect.x = 0
+      elif self.rect.x < self.min_x:
+         self.rect.x = self.min_x
          self.vel_x = self.MAX_VELOCITY_X
          self.move_interval = 1000
          
@@ -728,8 +732,8 @@ class Drone(Enemy):
          self.vel_y = self.MIN_VELOCITY_Y
          self.move_interval = 1500
          
-      elif self.rect.y < 0:
-         self.rect.y = 0
+      elif self.rect.y < self.min_y:
+         self.rect.y = self.min_y
          self.vel_y = self.MAX_VELOCITY_Y
       
 
@@ -797,13 +801,7 @@ class Boss(Enemy):
    def fireWeapon(self,level = 1):
       
       
-      x_dir  = self.target_x-self.rect.x+self.CENTER_CANNON[0]
-      y_dir = self.target_y-self.rect.y+self.CENTER_CANNON[1]
 
-      (x_vel,y_vel) = self.aim(x_dir,y_dir,3)
-      
-      #print("Aiming from (%d,%d) to (%d, %d) at (%d,%d)" % (self.rect.x+self.CENTER_CANNON[0],self.target_y-self.rect.y+self.CENTER_CANNON[1],self.target_x,self.target_y,x_vel,y_vel) )
-   
       now = pygame.time.get_ticks()
       
       shots = []
@@ -811,16 +809,37 @@ class Boss(Enemy):
       if now - self.last_fired > self.fire_rate: 
    
          shots.append(Shot("EnemyBlaster",self.rect.x+self.LEFT_CANNON[0],self.rect.y+self.LEFT_CANNON[1],0,4))
-         shots.append( Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],-3,3))
-         shots.append( Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],0,4))
-         shots.append( Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],3,3))
          shots.append(Shot("EnemyBlaster",self.rect.x+self.RIGHT_CANNON[0],self.rect.y+self.RIGHT_CANNON[1],0,4))
          
+         # Add spread for level 2
+         if level >= 2:
+            shots.append( Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],-3,3))
+            shots.append( Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],0,4))
+            shots.append( Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],3,3))
+           
+         # Fire sideways on level 3.    
+         if level >= 3:      
+               shots.append( Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],-4,0))
+               shots.append( Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],4,0))
+   
          # Fire backwards on higher levels
-         if level >= 5:
+         if level >= 4:
                shots.append( Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],-3,-3))
                shots.append( Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],0,-4))
                shots.append( Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],3,-3))
+         
+         # Aimed shot on higher levels
+         if level >= 5:
+            x_dir  = self.target_x-self.rect.x+self.CENTER_CANNON[0]
+            y_dir = self.target_y-self.rect.y+self.CENTER_CANNON[1]
+
+            # shot gets faster the higher you go.
+            (x_vel,y_vel) = self.aim(x_dir,y_dir,level-1)
+      
+            #print("Aiming from (%d,%d) to (%d, %d) at (%d,%d)" % (self.rect.x+self.CENTER_CANNON[0],self.target_y-self.rect.y+self.CENTER_CANNON[1],self.target_x,self.target_y,x_vel,y_vel) )
+   
+            shots.append( Shot("EnemyBullet",self.rect.x+self.CENTER_CANNON[0],self.rect.y+self.CENTER_CANNON[1],x_vel,y_vel))
+
 
          self.fire_rate = random.randint(self.MIN_FIRE_RATE,self.BASE_FIRE_RATE)
          self.last_fired = now         
@@ -862,8 +881,8 @@ class Boss(Enemy):
       if self.rect.x > self.max_x:
          self.rect.x = self.max_x
          self.vel_x = self.MIN_VELOCITY_X
-      elif self.rect.x < 0:
-         self.rect.x = 0
+      elif self.rect.x < self.min_x:
+         self.rect.x = self.min_x
          self.vel_x = self.MAX_VELOCITY_X
          
       if self.rect.y > self.max_y:
@@ -898,7 +917,7 @@ class EnemyBlaster(GameObject):
    
 
    def validateMove(self):
-      if self.rect.y > 600:
+      if self.rect.y > self.max_y:
          self.kill()
    
 
@@ -924,7 +943,7 @@ class EnemyBullet(GameObject):
 
    def validateMove(self):
       # If the bullet has gone off the screen, kill it.
-      if self.rect.x <= 0 or self.rect.y <= 0 or self.rect.y >= self.max_y or self.rect.x >= self.max_x: 
+      if self.rect.x <= self.min_x or self.rect.y <= self.min_y or self.rect.y >= self.max_y or self.rect.x >= self.max_x: 
          self.kill()
 
 # Player Blaster. We know it's good because it's blue.
@@ -945,7 +964,7 @@ class PlayerBlaster(GameObject):
       self.min_y = 0
 
    def validateMove(self):
-      if self.rect.y < 0:
+      if self.rect.y < self.min_y:
          self.kill()
 
 # Generic class for power ups.

@@ -27,7 +27,8 @@ import random
 import Starfire.utils.background as background
 import Starfire.gameobjects as gameobjects
 
-
+INIT_LIVES = 3
+INIT_LEVEL = 1
 
 class Model():
 
@@ -63,8 +64,8 @@ class Model():
    # start a new game   
    def initGame(self):
 
-      self.lives = 3
-      self.level = 1
+      self.lives = INIT_LIVES
+      self.level = INIT_LEVEL
       self.enemy_rate = 1000
       self.boss_interval = 40000
       self.last_enemy = pygame.time.get_ticks()
@@ -400,4 +401,7 @@ class Model():
          self.player_objects.add(self.playerOne)
 
       return False
+   
+   
+
       
