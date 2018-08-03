@@ -27,7 +27,7 @@ import random
 import Starfire.utils.background as background
 import Starfire.gameobjects as gameobjects
 
-INIT_LIVES = 3
+INIT_LIVES = 2
 INIT_LEVEL = 1
 
 class Model():
@@ -73,6 +73,7 @@ class Model():
       self.last_boss = pygame.time.get_ticks()
       self.pu_rate = 10000
       self.points = 0  
+      
       
       # empty the sprite groups    
       self.player_objects.empty()
@@ -207,8 +208,9 @@ class Model():
       self.last_pu = now
       rate_max = 20000 + (1000 * (self.level-1))
       rate_min = 7000 + (1000 * (self.level-1))
-      self.pu_rate = random.randint(rate_min,rate_max)    
-   
+      self.pu_rate = random.randint(rate_min,rate_max)   
+      
+ 
    # Animate the sprites
    def animate(self):
       self.playerOne.animate()
@@ -309,8 +311,10 @@ class Model():
          # Player vs enemy = damage to both         
          player_hits = pygame.sprite.groupcollide(self.enemy_objects, self.player_objects, False, False)
          for enemy in player_hits:
-            enemy.hit(self.playerOne)
-            self.playerOne.hit(enemy)
+            enemy_hp = enemy.hit(self.playerOne)
+            self_hp = self.playerOne.hit(enemy)
+            print("after collision: enemy_hp = %d, self_hp = %d" % (enemy_hp,self_hp))
+            self.checkDeath(enemy)
             # If the enemy is still alive, we have a hit.
             if enemy.alive():
                self.sound_state['EnemyHit'] = True
