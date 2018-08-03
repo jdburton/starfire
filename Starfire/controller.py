@@ -11,14 +11,16 @@ import time
 
 SCREEN_WIDTH=800
 SCREEN_HEIGHT=600
-GAME_OVER = 1
+
+
+
 
 class Controller():
    
    
    def __init__(self):
       self.clock = pygame.time.Clock()
-      self.V = view.View(SCREEN_WIDTH,SCREEN_HEIGHT)
+      self.V = view.View(SCREEN_WIDTH,SCREEN_HEIGHT,gameobjects.MAX_FPS)
       self.M = model.Model(SCREEN_WIDTH,SCREEN_HEIGHT)
       self.M.sprite_images = gameobjects.loadImagesFromSheet()
       self.sound_manager = soundmanager.SoundManager()
@@ -135,7 +137,7 @@ class Controller():
       self.M.enemy_shot_objects.draw(self.V.screen)
       self.M.powerup_objects.draw(self.V.screen)
       
-      self.V.drawState(self.M.lives,self.M.playerOne.hit_points,self.M.points)
+      self.V.drawState(self.M.level,self.M.lives,self.M.playerOne.hit_points,self.M.points)
       
    def moveObjects(self):
       self.processGameInput()
@@ -151,7 +153,8 @@ class Controller():
 
    
    def playIntro(self):
-      self.M.music_manager['Intro'].play(-1)
+      pygame.mixer.music.load('music/intro.mid')
+      pygame.mixer.music.play(-1)
    
    def playTheme(self):
       pygame.mixer.music.load('music/boss.mid')
@@ -188,12 +191,13 @@ class Controller():
 
                return
             
-         self.clock.tick(60)
+         self.clock.tick(gameobjects.MAX_FPS)
    
    
    def displayTitle(self):
       
       self.V.displayTitle()
+      self.playIntro()
       while True:
          for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
@@ -202,7 +206,7 @@ class Controller():
                if (event.key == K_RETURN):
                   return
             
-         self.clock.tick(60)
+         self.clock.tick(gameobjects.MAX_FPS)
          
    def displayHelp(self):
       
@@ -216,7 +220,7 @@ class Controller():
                if (event.key == K_RETURN):
                   help_idx = self.V.displayHelp()
             
-         self.clock.tick(60)
+         self.clock.tick(gameobjects.MAX_FPS)
    
    def mainMenu(self):
       
@@ -230,19 +234,22 @@ class Controller():
                if (event.key == K_ESCAPE or  event.key == K_q):
                   sys.exit()
                elif (event.key == K_RETURN or event.key == K_n):
+                  self.grabMouse(SCREEN_WIDTH/2,SCREEN_HEIGHT-100)
                   self.gameLoop()
                   self.V.displayMenu()
+                  self.releaseMouse()
+                  self.playIntro()
                elif (event.key == K_h):
                   self.displayHelp()   
                   self.V.displayMenu()
             
-         self.clock.tick(60)
+         self.clock.tick(gameobjects.MAX_FPS)
 
    def mainLoop(self):
       self.displayLogo()
       self.displayTitle()
   
-      self.grabMouse(SCREEN_WIDTH/2,SCREEN_HEIGHT-100)
+      
       self.mainMenu()
       sys.exit()
       
@@ -253,18 +260,24 @@ class Controller():
       start = pygame.time.set_timer(pygame.TIMER_RESOLUTION, 2000)
       wait = True
       while wait:
+         # Continue the display sequence for 2 seconds
+         self.V.drawBackground()
+         self.moveObjects()
+         self.drawObjects()
+         self.V.updateDisplay()
+         self.V.postProcessing()
          for event in pygame.event.get():
             if event.type == pygame.TIMER_RESOLUTION:
                wait = False
                break
             
-         self.clock.tick(60)
+         self.clock.tick(gameobjects.MAX_FPS)
       
       self.V.displayGameOver()
       
       self.sound_manager.playQueuedSounds(sound_q = ["Gameover2","Gameover1"])
 
-      start = pygame.time.set_timer(pygame.TIMER_RESOLUTION, 8000)
+      start = pygame.time.set_timer(pygame.TIMER_RESOLUTION, 5000)
       
       while True:
          for event in pygame.event.get():
@@ -274,7 +287,7 @@ class Controller():
                return True
 
             
-         self.clock.tick(60)
+         self.clock.tick(gameobjects.MAX_FPS)
    
    
 
@@ -283,7 +296,7 @@ class Controller():
       self.V.initGame()
       self.playTheme()
       self.sound_manager.playQueuedSounds(["Start"])
-      #self.playIntro()
+      
       
       die = 0
 
@@ -291,6 +304,7 @@ class Controller():
          
          self.V.drawBackground()
          self.M.createEnemies()
+
          self.M.createPowerUps()
          self.moveObjects()
          self.drawObjects()
@@ -301,5 +315,5 @@ class Controller():
 
             return self.gameOver()
     
-         self.clock.tick(60)
+         self.clock.tick(gameobjects.MAX_FPS)
    

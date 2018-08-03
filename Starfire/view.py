@@ -14,15 +14,17 @@ MENU_FILE='images/menu.bmp'
 FONT_SIZE = 26
 FONT_FILE = 'fonts/stonehen.ttf'
 FONT_COLOR = (254,249,215)
-HELP_FILES =[ 'images/help.bmp', 'images/enemies.bmp' ]
+HELP_FILES =[ 'images/help_new.bmp', 'images/enemies.bmp' ]
 
 class View:
 
-   def __init__(self,screen_width,screen_height):
+   def __init__(self,screen_width,screen_height,display_fps):
       
       pygame.display.set_caption('Starfire')
       self.screen = pygame.display.set_mode((screen_width, screen_height))
       self.help_index = 0
+      self.display_fps = display_fps
+      self.last_scroll = pygame.time.get_ticks()
       
    def displayLogo(self):
       self.background = background.StaticBackground(LOGO_FILE)
@@ -75,14 +77,18 @@ class View:
          self.screen.blit(bgimage.image,(bgimage.x_coord,bgimage.y_coord))
    
    def postProcessing(self):
-      self.background.scroll()
+      now = pygame.time.get_ticks()
+      speed = int( 1.5 * (now - self.last_scroll ) * self.display_fps * 0.001)
+      self.background.scroll(speed)
+      self.last_scroll = now
       
    def initText(self):
       #pygame.font.init()
       self.myfont = pygame.font.Font(FONT_FILE, FONT_SIZE)
       
-   def drawState(self,lives,shield,points):
+   def drawState(self,level,lives,shield,points):
       self.text_msg = []
+      self.text_msg.append(self.myfont.render("Level: %d" % level, True, FONT_COLOR))
       self.text_msg.append(self.myfont.render("Lives: %d" % lives, True, FONT_COLOR))
       self.text_msg.append(self.myfont.render("Shield: %d" % shield, True, FONT_COLOR))
       self.text_msg.append(self.myfont.render("Points: %d" % points, True, FONT_COLOR))
