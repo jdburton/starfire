@@ -124,10 +124,10 @@ class Controller():
          self.fireWeapon();
       
       if self.move_up:
-         move_y -= MOVE_SIZE
+         move_y -= MOVE_SIZE+1
 
       if self.move_down:
-         move_y += MOVE_SIZE
+         move_y += MOVE_SIZE-1
          
       if self.move_left:
          move_x -= MOVE_SIZE
