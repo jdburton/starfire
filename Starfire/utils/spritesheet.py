@@ -1,3 +1,13 @@
+#!/usr/bin/env python3
+#
+# James Burton
+# jburto2@clemson.edu
+# CPSC 8700
+# August 3, 2018
+# Final Project
+#
+# Starfire/utils/spritesheet.py
+#
 # This class was taken from the pygame wiki
 # http://www.pygame.org/wiki/Spritesheet
 #

@@ -1,7 +1,19 @@
+#!/usr/bin/env python3
+#
+# James Burton
+# jburto2@clemson.edu
+# CPSC 8700
+# August 3, 2018
+# Final Project
+#
+# Starfire/utils/background.py
+#
+# This module is a utility for displaying backgrounds. Down scrolling and static backgrounds have been implemented.
+#
+#
+
 import pygame
 
-
-     
 class Background():
    
     
@@ -17,6 +29,7 @@ class Background():
       self.images = []
       self.image_coordinates = [ 0 ]
 
+   # implement scroll in the derived classes
    def scroll(self,speed):
       pass
 
@@ -54,7 +67,7 @@ class DownScrollingBackground(Background):
 
 
    
-   
+# background from a single frame
 class StaticBackground(Background):
    def __init__(self,filename):
       

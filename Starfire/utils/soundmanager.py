@@ -1,7 +1,19 @@
+#!/usr/bin/env python3
+#
+# James Burton
+# jburto2@clemson.edu
+# CPSC 8700
+# August 3, 2018
+# Final Project
+#
+# Starfire/utils/soundmanager.py
+#
+# This module is a utility for playing game sounds. 
+# This does not include game music, which is covered by the built-in pygame.mixer.music.
+#
+#
+
 import pygame
-
-
-
 
 class SoundManager():
    
@@ -30,11 +42,12 @@ class SoundManager():
       self.sounds['NewShip2'] = pygame.mixer.Sound('sounds/begin1.wav')
       self.sounds['Explosion'] = pygame.mixer.Sound('sounds/EXPLOSION.WAV')
 
-   
+   # Play sounds from a dictionary of active sounds. 
+   # The keys of the active sounds are the same as the keys of the loaded sound in the manager.
    def playActiveSounds(self,active_sounds = {}):
       for sound in active_sounds.keys():
          if active_sounds[sound]:
-            # Keep a single sound (usually the player blaster) from overwhelming the system.
+            # Limit to 3 channels to keep a single sound (usually the player blaster) from overwhelming the system.
             if self.sounds[sound].get_num_channels() < 3:
                self.sounds[sound].play()
             active_sounds[sound] = False
@@ -47,9 +60,10 @@ class SoundManager():
             active_sounds[sound] = False
       self.playQueuedSounds(sound_q)
    
+   
+   # Play sounds consecutively.
    def playQueuedSounds(self,sound_q = []):
       q_channel = pygame.mixer.find_channel()
-      
       for sound in sound_q:
          q_channel.queue(self.sounds[sound])      
       
@@ -59,14 +73,14 @@ class SoundManager():
       for channel in self.q_channels:
          if not channel.get_busy():
             self.q_channels.remove(channel) 
-      
       return len(self.q_channels)
    
+   # play sounds concurrently.
    def playConcurrentSounds(self,sounds = []):
-      
       for sound in sounds:
          self.sounds[sound].play()
-         
+    
+   # stop concurrent sounds     
    def stopConcurrentSounds(self,sounds = None):
       if sounds is None:
          sounds = self.sounds.keys()
